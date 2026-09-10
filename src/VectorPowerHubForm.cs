@@ -29,7 +29,9 @@ namespace VectorPowerHub {
         public string ActiveGameName = "";
         public int ActiveGamePid = 0;
         public string GpuStatus = "D3cold Sleeping (0.0W) • PCIe Link Off";
-        public string ActiveProfile = "snappy";
+        public string ActiveProfile = "desktop";
+        public string SelectedGamingProfile = "snappy";
+        public bool AutoProfileSwitching = true;
         public bool IsNvidiaDisplayAttached = false;
         public string NvidiaMonitorName = "";
 
@@ -169,6 +171,7 @@ namespace VectorPowerHub {
         private GlowButton btnTabProfiles;
         private GlowButton btnTabBenchmark;
         private GlowButton btnTabTopology;
+        private GlowButton btnToggleAutoSwitch;
         private int currentTabIndex = 0; // 0 = Profiles, 1 = Benchmark, 2 = Per-Core Topology
 
         // View 1: Profile Selection Cards
@@ -238,8 +241,12 @@ namespace VectorPowerHub {
         private GlowButton btnFooterTray;
         private GlowButton btnFooterExit;
 
-        // Active Selected Profile Tracker
-        public string currentSelectedProfile = "snappy";
+        // Active Selected Profile & Game Automation Trackers
+        public string currentSelectedProfile = "desktop";
+        public string currentSelectedGamingProfile = "snappy";
+        public bool isAutoProfileSwitchingEnabled = true;
+        private bool lastObservedGameMode = false;
+        private MenuItem trayMenuAutoSwitch;
 
         // -----------------------------------------------------------------------------------------
         // CONSTRUCTOR
@@ -454,9 +461,18 @@ namespace VectorPowerHub {
             btnTabTopology.TextColor = ColorTextMuted;
             btnTabTopology.Click += (s, e) => SwitchTab(2);
 
+            btnToggleAutoSwitch = new GlowButton();
+            btnToggleAutoSwitch.Text = "⚡ AUTO-PROFILES: ON (GAME SYNC)";
+            btnToggleAutoSwitch.Size = new Size(270, 36);
+            btnToggleAutoSwitch.ButtonColor = Color.FromArgb(14, 38, 26);
+            btnToggleAutoSwitch.BorderColor = ColorAccentGreen;
+            btnToggleAutoSwitch.TextColor = ColorAccentGreen;
+            btnToggleAutoSwitch.Click += (s, e) => ToggleAutoProfileSwitching();
+
             panelTabStrip.Controls.Add(btnTabProfiles);
             panelTabStrip.Controls.Add(btnTabBenchmark);
             panelTabStrip.Controls.Add(btnTabTopology);
+            panelTabStrip.Controls.Add(btnToggleAutoSwitch);
             this.Controls.Add(panelTabStrip);
 
             // =========================================================================
@@ -624,6 +640,11 @@ namespace VectorPowerHub {
             int tabTop = 398;
             panelTabStrip.Location = new Point(16, tabTop);
             panelTabStrip.Size = new Size(w - 32, 38);
+            if (btnToggleAutoSwitch != null) {
+                int autoBtnW = Math.Min(350, Math.Max(240, (w - 32) - 580));
+                btnToggleAutoSwitch.Size = new Size(autoBtnW, 36);
+                btnToggleAutoSwitch.Location = new Point((w - 32) - autoBtnW, 1);
+            }
 
             // 5. Views Area
             int viewTop = 440;
@@ -1231,6 +1252,11 @@ namespace VectorPowerHub {
             trayMenu.MenuItems.Add(mHeader);
             trayMenu.MenuItems.Add(new MenuItem("-"));
 
+            trayMenuAutoSwitch = new MenuItem("⚡ Auto-Profile Switching (Game ON/OFF)", (s, e) => ToggleAutoProfileSwitching());
+            trayMenuAutoSwitch.Checked = true;
+            trayMenu.MenuItems.Add(trayMenuAutoSwitch);
+            trayMenu.MenuItems.Add(new MenuItem("-"));
+
             trayMenuSnappy = new MenuItem("⚡ Snappy-Pacing (Competitive Max FPS)", (s, e) => SelectProfile("snappy"));
             trayMenuEfficiency = new MenuItem("✦ Sweet-Spot Efficiency (4.9 GHz / 58W)", (s, e) => SelectProfile("clamped"));
             trayMenuCold = new MenuItem("❄ Cold & Quiet (GPU 2100 MHz)", (s, e) => SelectProfile("cold"));
@@ -1383,17 +1409,37 @@ namespace VectorPowerHub {
                     topologyControl.SetCoreData(snap.PerCoreGhz, snap.PerCoreUtil, snap.CpuPowerW);
                 }
 
-                // Synchronize Active Profile
-                if (!string.IsNullOrEmpty(snap.ActiveProfile) && snap.ActiveProfile != currentSelectedProfile) {
-                    currentSelectedProfile = snap.ActiveProfile;
-                    UpdateProfileCardsVisualState();
+                // Game ON / Game OFF automation transition detection
+                if (snap.IsGameMode != lastObservedGameMode) {
+                    lastObservedGameMode = snap.IsGameMode;
+                    if (snap.IsGameMode) {
+                        ShowNotificationBalloon("🎮 Game Detected - Profile Engaged",
+                            string.Format("'{0}' is rendering! Auto-switched to {1} profile.",
+                                string.IsNullOrEmpty(snap.ActiveGameName) ? "Active Game" : snap.ActiveGameName,
+                                snap.ActiveProfile.ToUpper()));
+                    } else {
+                        ShowNotificationBalloon("🛑 Game Exited - Standby Restored",
+                            "Game session ended. Automatically restored Desktop Standby profile (D3cold GPU sleep).");
+                    }
                 }
+
+                if (!string.IsNullOrEmpty(snap.SelectedGamingProfile)) {
+                    currentSelectedGamingProfile = snap.SelectedGamingProfile;
+                }
+                if (!string.IsNullOrEmpty(snap.ActiveProfile)) {
+                    currentSelectedProfile = snap.ActiveProfile;
+                }
+                isAutoProfileSwitchingEnabled = snap.AutoProfileSwitching;
+
+                UpdateAutoSwitchVisuals();
+                UpdateProfileCardsVisualState();
             } catch { }
         }
 
         private void SelectProfile(string profileId) {
-            currentSelectedProfile = profileId;
+            currentSelectedGamingProfile = profileId;
             bridge.ApplyProfile(profileId);
+            currentSelectedProfile = profileId;
             UpdateProfileCardsVisualState();
 
             string name = "Snappy-Pacing";
@@ -1401,20 +1447,98 @@ namespace VectorPowerHub {
             if (profileId == "cold") name = "Cold & Quiet (GPU 2100 MHz)";
 
             trayIcon.Text = string.Format("Vector Power Hub - {0} Active", name);
-            ShowNotificationBalloon("Profile Switched", string.Format("Activated profile: {0}", name));
+
+            if (currentSnapshot != null && currentSnapshot.IsGameMode) {
+                ShowNotificationBalloon("In-Game Profile Switched", string.Format("Switched in-game profile to: {0}", name));
+            } else if (isAutoProfileSwitchingEnabled) {
+                ShowNotificationBalloon("Gaming Target Configured", string.Format("Selected '{0}' as designated gaming profile (Auto-Engages on Game Launch).", name));
+            } else {
+                ShowNotificationBalloon("Profile Switched", string.Format("Activated profile: {0}", name));
+            }
+        }
+
+        private void ToggleAutoProfileSwitching() {
+            isAutoProfileSwitchingEnabled = !isAutoProfileSwitchingEnabled;
+            bridge.SetAutoProfileSwitching(isAutoProfileSwitchingEnabled);
+            UpdateAutoSwitchVisuals();
+
+            if (isAutoProfileSwitchingEnabled) {
+                ShowNotificationBalloon("Auto-Profiles Enabled", string.Format("Game ON ➔ {0} | Game OFF ➔ Desktop Standby (D3cold)", currentSelectedGamingProfile.ToUpper()));
+            } else {
+                ShowNotificationBalloon("Auto-Profiles Disabled", "Manual profile lock engaged. Auto-switching suspended.");
+            }
+        }
+
+        private void UpdateAutoSwitchVisuals() {
+            if (btnToggleAutoSwitch != null) {
+                if (isAutoProfileSwitchingEnabled) {
+                    btnToggleAutoSwitch.Text = "⚡ AUTO-PROFILES: ON (GAME SYNC)";
+                    btnToggleAutoSwitch.ButtonColor = Color.FromArgb(14, 38, 26);
+                    btnToggleAutoSwitch.BorderColor = ColorAccentGreen;
+                    btnToggleAutoSwitch.TextColor = ColorAccentGreen;
+                } else {
+                    btnToggleAutoSwitch.Text = "⚡ AUTO-PROFILES: OFF (MANUAL LOCK)";
+                    btnToggleAutoSwitch.ButtonColor = Color.FromArgb(32, 28, 16);
+                    btnToggleAutoSwitch.BorderColor = ColorAccentGold;
+                    btnToggleAutoSwitch.TextColor = ColorAccentGold;
+                }
+            }
+            if (trayMenuAutoSwitch != null) {
+                trayMenuAutoSwitch.Checked = isAutoProfileSwitchingEnabled;
+            }
+
+            if (lblFooterStatus != null) {
+                string autoText = isAutoProfileSwitchingEnabled
+                    ? string.Format("Auto-Profiles: ON (Game ON ➔ {0} | Game OFF ➔ Desktop)", currentSelectedGamingProfile.ToUpper())
+                    : "Auto-Profiles: OFF (Manual Lock)";
+                lblFooterStatus.Text = string.Format("• ETW DXGI Active | {0} | D3cold Safe Architecture", autoText);
+            }
         }
 
         private void UpdateProfileCardsVisualState() {
+            bool isGameOn = (currentSnapshot != null && currentSnapshot.IsGameMode);
+
             cardProfileSnappy.IsActive = (currentSelectedProfile == "snappy");
             cardProfileEfficiency.IsActive = (currentSelectedProfile == "clamped");
             cardProfileCold.IsActive = (currentSelectedProfile == "cold");
 
-            lblProfileBadge.Text = string.Format("ACTIVE: {0}", currentSelectedProfile.ToUpper());
+            cardProfileSnappy.IsDesignatedGamingProfile = (currentSelectedGamingProfile == "snappy");
+            cardProfileEfficiency.IsDesignatedGamingProfile = (currentSelectedGamingProfile == "clamped");
+            cardProfileCold.IsDesignatedGamingProfile = (currentSelectedGamingProfile == "cold");
 
-            trayMenuSnappy.Checked = (currentSelectedProfile == "snappy");
-            trayMenuEfficiency.Checked = (currentSelectedProfile == "clamped");
-            trayMenuCold.Checked = (currentSelectedProfile == "cold");
-            trayMenuCustom.Checked = (currentSelectedProfile == "custom");
+            cardProfileSnappy.IsGameMode = isGameOn;
+            cardProfileEfficiency.IsGameMode = isGameOn;
+            cardProfileCold.IsGameMode = isGameOn;
+
+            cardProfileSnappy.AutoSwitchEnabled = isAutoProfileSwitchingEnabled;
+            cardProfileEfficiency.AutoSwitchEnabled = isAutoProfileSwitchingEnabled;
+            cardProfileCold.AutoSwitchEnabled = isAutoProfileSwitchingEnabled;
+
+            cardProfileSnappy.Invalidate();
+            cardProfileEfficiency.Invalidate();
+            cardProfileCold.Invalidate();
+
+            if (lblProfileBadge != null) {
+                if (isGameOn) {
+                    lblProfileBadge.Text = string.Format("ACTIVE: {0} (GAME ON)", currentSelectedProfile.ToUpper());
+                    lblProfileBadge.ForeColor = ColorAccentGreen;
+                    lblProfileBadge.BackColor = Color.FromArgb(12, 38, 24);
+                } else if (isAutoProfileSwitchingEnabled) {
+                    lblProfileBadge.Text = string.Format("DESKTOP STANDBY • AUTO: {0}", currentSelectedGamingProfile.ToUpper());
+                    lblProfileBadge.ForeColor = ColorAccentCyan;
+                    lblProfileBadge.BackColor = Color.FromArgb(16, 28, 40);
+                } else {
+                    lblProfileBadge.Text = string.Format("MANUAL LOCK: {0}", currentSelectedProfile.ToUpper());
+                    lblProfileBadge.ForeColor = ColorAccentGold;
+                    lblProfileBadge.BackColor = Color.FromArgb(40, 32, 12);
+                }
+                lblProfileBadge.Location = new Point(this.ClientSize.Width - 158 - lblProfileBadge.Width, 11);
+            }
+
+            if (trayMenuSnappy != null) trayMenuSnappy.Checked = (currentSelectedGamingProfile == "snappy");
+            if (trayMenuEfficiency != null) trayMenuEfficiency.Checked = (currentSelectedGamingProfile == "clamped");
+            if (trayMenuCold != null) trayMenuCold.Checked = (currentSelectedGamingProfile == "cold");
+            if (trayMenuCustom != null) trayMenuCustom.Checked = (currentSelectedProfile == "custom");
         }
 
         // -----------------------------------------------------------------------------------------
@@ -2482,6 +2606,9 @@ namespace VectorPowerHub {
         public string[] Specs { get; set; }
         public string ButtonText { get; set; }
         public bool IsActive { get; set; }
+        public bool IsDesignatedGamingProfile { get; set; }
+        public bool IsGameMode { get; set; }
+        public bool AutoSwitchEnabled { get; set; }
         private bool isHovered = false;
 
         public event EventHandler ProfileClicked;
@@ -2523,9 +2650,10 @@ namespace VectorPowerHub {
                 g.FillRectangle(bBg, 0, 0, w, h);
             }
 
-            Color fill = IsActive ? VectorPowerHubForm.ColorCardSelected : (isHovered ? VectorPowerHubForm.ColorCardHover : VectorPowerHubForm.ColorCardBg);
-            Color border = IsActive ? AccentColor : (isHovered ? VectorPowerHubForm.ColorBorderHighlight : VectorPowerHubForm.ColorBorder);
-            float borderThickness = IsActive ? 2f : 1f;
+            bool isHighlighted = IsActive || (IsDesignatedGamingProfile && AutoSwitchEnabled);
+            Color fill = isHighlighted ? VectorPowerHubForm.ColorCardSelected : (isHovered ? VectorPowerHubForm.ColorCardHover : VectorPowerHubForm.ColorCardBg);
+            Color border = isHighlighted ? AccentColor : (isHovered ? VectorPowerHubForm.ColorBorderHighlight : VectorPowerHubForm.ColorBorder);
+            float borderThickness = isHighlighted ? 2f : 1f;
 
             using (GraphicsPath path = DarkCardPanel.GetRoundedPath(rect, 8)) {
                 using (Brush b = new SolidBrush(fill)) {
@@ -2537,7 +2665,7 @@ namespace VectorPowerHub {
             }
 
             using (Brush b = new SolidBrush(AccentColor)) {
-                g.FillRectangle(b, 12, 0, w - 24, IsActive ? 3 : 2);
+                g.FillRectangle(b, 12, 0, w - 24, isHighlighted ? 3 : 2);
             }
 
             using (Font fTitle = new Font("Segoe UI", 11.5f, FontStyle.Bold)) {
@@ -2567,15 +2695,31 @@ namespace VectorPowerHub {
                 }
             }
 
+            string btnLabel;
+            bool btnFilled = false;
+            if (IsActive && IsGameMode) {
+                btnLabel = "✔ ACTIVE IN-GAME";
+                btnFilled = true;
+            } else if (IsActive && !AutoSwitchEnabled) {
+                btnLabel = "✔ ACTIVE (MANUAL)";
+                btnFilled = true;
+            } else if (IsDesignatedGamingProfile && AutoSwitchEnabled) {
+                btnLabel = "★ GAMING TARGET (AUTO-ON)";
+                btnFilled = true;
+            } else {
+                btnLabel = AutoSwitchEnabled ? "SET GAMING TARGET" : "APPLY PROFILE";
+                btnFilled = false;
+            }
+
             using (GraphicsPath btnPath = DarkCardPanel.GetRoundedPath(btnRect, 4)) {
-                if (IsActive) {
+                if (btnFilled) {
                     using (Brush b = new SolidBrush(AccentColor)) {
                         g.FillPath(b, btnPath);
                     }
                     using (Font fBtn = new Font("Segoe UI", 9f, FontStyle.Bold)) {
                         using (Brush b = new SolidBrush(VectorPowerHubForm.ColorBgMain)) {
                             StringFormat sf = new StringFormat() { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center };
-                            g.DrawString("✔ ACTIVE PROFILE", fBtn, b, btnRect, sf);
+                            g.DrawString(btnLabel, fBtn, b, btnRect, sf);
                         }
                     }
                 } else {
@@ -2588,7 +2732,7 @@ namespace VectorPowerHub {
                     using (Font fBtn = new Font("Segoe UI", 8.5f, FontStyle.Bold)) {
                         using (Brush b = new SolidBrush(isHovered ? AccentColor : VectorPowerHubForm.ColorTextMuted)) {
                             StringFormat sf = new StringFormat() { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center };
-                            g.DrawString(ButtonText, fBtn, b, btnRect, sf);
+                            g.DrawString(btnLabel, fBtn, b, btnRect, sf);
                         }
                     }
                 }
@@ -3093,6 +3237,7 @@ namespace VectorPowerHub {
         private object engineInstance = null;
         private MethodInfo applyProfileMethod = null;
         private MethodInfo applyCustomMethod = null;
+        private MethodInfo setAutoSwitchMethod = null;
         private PropertyInfo currentSnapshotProp = null;
         private bool isEngineLoaded = false;
 
@@ -3154,6 +3299,7 @@ namespace VectorPowerHub {
 
                     applyProfileMethod = engineType.GetMethod("ApplyProfile");
                     applyCustomMethod = engineType.GetMethod("ApplyCustomProfile");
+                    setAutoSwitchMethod = engineType.GetMethod("SetAutoProfileSwitching");
                     currentSnapshotProp = engineType.GetProperty("CurrentSnapshot");
 
                     MethodInfo startMethod = engineType.GetMethod("Start");
@@ -3204,6 +3350,9 @@ namespace VectorPowerHub {
                         snapshot.PerCoreUtil = ReadDoubleArray(t, snapObj, "PerCoreUtil");
                         snapshot.IsNvidiaDisplayAttached = ReadBool(t, snapObj, "IsNvidiaDisplayAttached");
                         snapshot.NvidiaMonitorName = ReadString(t, snapObj, "NvidiaMonitorName");
+                        snapshot.ActiveProfile = ReadString(t, snapObj, "ActiveProfile");
+                        snapshot.SelectedGamingProfile = ReadString(t, snapObj, "SelectedGamingProfile");
+                        snapshot.AutoProfileSwitching = ReadBool(t, snapObj, "AutoProfileSwitching");
                         return snapshot;
                     }
                 } catch { }
@@ -3295,6 +3444,14 @@ namespace VectorPowerHub {
                 RunCmd(string.Format("nvidia-smi -lgc 300,{0}", gpuClock));
             } else {
                 RunCmd("nvidia-smi -rgc");
+            }
+        }
+
+        public void SetAutoProfileSwitching(bool enabled) {
+            if (isEngineLoaded && setAutoSwitchMethod != null && engineInstance != null) {
+                try {
+                    setAutoSwitchMethod.Invoke(engineInstance, new object[] { enabled });
+                } catch { }
             }
         }
 

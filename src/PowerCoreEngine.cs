@@ -25,6 +25,9 @@ public struct TelemetrySnapshot {
     public double TotalPlatformPowerW;
     public bool IsNvidiaDisplayAttached;
     public string NvidiaMonitorName;
+    public string ActiveProfile;
+    public string SelectedGamingProfile;
+    public bool AutoProfileSwitching;
 }
 
 public struct BenchmarkProgress {
@@ -125,7 +128,7 @@ public class PowerCoreEngine : IDisposable {
         }
     }
 
-    private string _selectedGamingProfile;
+    private string _selectedGamingProfile = "snappy";
     public string SelectedGamingProfile {
         get {
             lock (_syncLock) {
@@ -136,12 +139,33 @@ public class PowerCoreEngine : IDisposable {
             lock (_syncLock) {
                 if (!string.IsNullOrEmpty(value)) {
                     _selectedGamingProfile = value.Trim().ToLowerInvariant();
-                    if (_isGameMode) {
+                    if (_isGameMode || !_autoProfileSwitching) {
                         ApplyProfileInternal(_selectedGamingProfile);
                     }
                 }
             }
         }
+    }
+
+    private volatile bool _autoProfileSwitching = true;
+    public bool AutoProfileSwitching {
+        get { return _autoProfileSwitching; }
+        set {
+            lock (_syncLock) {
+                _autoProfileSwitching = value;
+                if (_autoProfileSwitching) {
+                    if (_isGameMode) {
+                        ApplyProfileInternal(_selectedGamingProfile);
+                    } else {
+                        ApplyProfileInternal("desktop");
+                    }
+                }
+            }
+        }
+    }
+
+    public void SetAutoProfileSwitching(bool enabled) {
+        AutoProfileSwitching = enabled;
     }
 
     private volatile bool _isRunning;
@@ -597,7 +621,7 @@ public class PowerCoreEngine : IDisposable {
         }
 
         _activeProfile = profileId;
-        if (_isGameMode && profileId != "desktop") {
+        if (profileId != "desktop") {
             _selectedGamingProfile = profileId;
         }
     }
@@ -1047,7 +1071,9 @@ public class PowerCoreEngine : IDisposable {
 
                 if (!_isGameMode) {
                     _isGameMode = true;
-                    ApplyProfileInternal(_selectedGamingProfile);
+                    if (_autoProfileSwitching) {
+                        ApplyProfileInternal(_selectedGamingProfile);
+                    }
                     EnsureNvmlInitialized();
                 }
             } else {
@@ -1061,8 +1087,10 @@ public class PowerCoreEngine : IDisposable {
                         _currentFps = 0.0;
                         _gameModeExitTimer = 0.0;
 
-                        ApplyProfileInternal("desktop");
-                        ShutdownNvml();
+                        if (_autoProfileSwitching) {
+                            ApplyProfileInternal("desktop");
+                            ShutdownNvml();
+                        }
                     }
                 } else {
                     _currentFps = 0.0;
@@ -1156,6 +1184,9 @@ public class PowerCoreEngine : IDisposable {
         snapshot.TotalPlatformPowerW = cpuWatts + gpuWatts;
         snapshot.IsNvidiaDisplayAttached = isDisplayAttached;
         snapshot.NvidiaMonitorName = monitorName;
+        snapshot.ActiveProfile = _activeProfile;
+        snapshot.SelectedGamingProfile = _selectedGamingProfile;
+        snapshot.AutoProfileSwitching = _autoProfileSwitching;
 
         lock (_syncLock) {
             _currentSnapshot = snapshot;
