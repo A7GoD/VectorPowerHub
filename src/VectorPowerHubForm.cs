@@ -31,6 +31,7 @@ namespace VectorPowerHub {
         public string GpuStatus = "D3cold Sleeping (0.0W) • PCIe Link Off";
         public string ActiveProfile = "desktop";
         public string SelectedGamingProfile = "snappy";
+        public string SelectedDesktopProfile = "desktop";
         public bool AutoProfileSwitching = true;
         public bool IsNvidiaDisplayAttached = false;
         public string NvidiaMonitorName = "";
@@ -244,9 +245,15 @@ namespace VectorPowerHub {
         // Active Selected Profile & Game Automation Trackers
         public string currentSelectedProfile = "desktop";
         public string currentSelectedGamingProfile = "snappy";
+        public string currentSelectedDesktopProfile = "desktop";
         public bool isAutoProfileSwitchingEnabled = true;
         private bool lastObservedGameMode = false;
         private MenuItem trayMenuAutoSwitch;
+        private MenuItem trayMenuDesktopBalanced;
+        private MenuItem trayMenuDesktopSilent;
+        private MenuItem trayMenuDesktopCold;
+        private Label lblStandbyTitle;
+        private ComboBox comboStandbyProfile;
 
         // -----------------------------------------------------------------------------------------
         // CONSTRUCTOR
@@ -1205,8 +1212,37 @@ namespace VectorPowerHub {
             panelCustomTuner.Controls.Add(comboBoostMode);
             panelCustomTuner.Controls.Add(lblGpuClockLimitVal);
             panelCustomTuner.Controls.Add(trackGpuClock);
+            btnApplyCustom.Location = new Point(18, 295);
+            btnCloseTuner.Location = new Point(230, 295);
+
+            lblStandbyTitle = new Label();
+            lblStandbyTitle.Text = "🛑 Game OFF Standby Profile (Auto-Reverts on Game Exit):";
+            lblStandbyTitle.Font = new Font("Segoe UI", 8.5f, FontStyle.Bold);
+            lblStandbyTitle.ForeColor = ColorAccentGreen;
+            lblStandbyTitle.Location = new Point(350, 275);
+            lblStandbyTitle.AutoSize = true;
+
+            comboStandbyProfile = new ComboBox();
+            comboStandbyProfile.DropDownStyle = ComboBoxStyle.DropDownList;
+            comboStandbyProfile.BackColor = Color.FromArgb(18, 20, 26);
+            comboStandbyProfile.ForeColor = ColorTextWhite;
+            comboStandbyProfile.Font = new Font("Segoe UI", 9f, FontStyle.Bold);
+            comboStandbyProfile.Location = new Point(350, 300);
+            comboStandbyProfile.Size = new Size(440, 26);
+            comboStandbyProfile.Items.Add("🍃 Balanced Standby (50% EPP, Boost Mode 3, D3cold)");
+            comboStandbyProfile.Items.Add("🔇 Silent Power Saver (80% EPP, No Boost, D3cold)");
+            comboStandbyProfile.Items.Add("❄ Cold & Quiet (20% EPP, GPU Clamped 2100 MHz)");
+            comboStandbyProfile.SelectedIndex = 0;
+            comboStandbyProfile.SelectedIndexChanged += (s, e) => {
+                if (comboStandbyProfile.SelectedIndex == 0) SelectDesktopProfile("desktop");
+                else if (comboStandbyProfile.SelectedIndex == 1) SelectDesktopProfile("powersaver");
+                else if (comboStandbyProfile.SelectedIndex == 2) SelectDesktopProfile("cold");
+            };
+
             panelCustomTuner.Controls.Add(btnApplyCustom);
             panelCustomTuner.Controls.Add(btnCloseTuner);
+            panelCustomTuner.Controls.Add(lblStandbyTitle);
+            panelCustomTuner.Controls.Add(comboStandbyProfile);
 
             this.Controls.Add(panelCustomTuner);
             panelCustomTuner.BringToFront();
@@ -1260,6 +1296,25 @@ namespace VectorPowerHub {
             trayMenuSnappy = new MenuItem("⚡ Snappy-Pacing (Competitive Max FPS)", (s, e) => SelectProfile("snappy"));
             trayMenuEfficiency = new MenuItem("✦ Sweet-Spot Efficiency (4.9 GHz / 58W)", (s, e) => SelectProfile("clamped"));
             trayMenuCold = new MenuItem("❄ Cold & Quiet (GPU 2100 MHz)", (s, e) => SelectProfile("cold"));
+
+            MenuItem mGameOn = new MenuItem("🎮 Game ON Target Profile");
+            mGameOn.MenuItems.Add(trayMenuSnappy);
+            mGameOn.MenuItems.Add(trayMenuEfficiency);
+            mGameOn.MenuItems.Add(trayMenuCold);
+            trayMenu.MenuItems.Add(mGameOn);
+
+            trayMenuDesktopBalanced = new MenuItem("🍃 Balanced Standby (50% EPP, Boost Mode 3, D3cold)", (s, e) => SelectDesktopProfile("desktop"));
+            trayMenuDesktopSilent = new MenuItem("🔇 Silent Power Saver (80% EPP, No Boost, D3cold)", (s, e) => SelectDesktopProfile("powersaver"));
+            trayMenuDesktopCold = new MenuItem("❄ Cold & Quiet (GPU Clamped 2100 MHz)", (s, e) => SelectDesktopProfile("cold"));
+
+            MenuItem mGameOff = new MenuItem("🛑 Game OFF Standby Profile");
+            mGameOff.MenuItems.Add(trayMenuDesktopBalanced);
+            mGameOff.MenuItems.Add(trayMenuDesktopSilent);
+            mGameOff.MenuItems.Add(trayMenuDesktopCold);
+            trayMenu.MenuItems.Add(mGameOff);
+
+            trayMenu.MenuItems.Add(new MenuItem("-"));
+
             trayMenuCustom = new MenuItem("⚙ Hardware Tuner...", (s, e) => {
                 RestoreFromTray();
                 SwitchTab(2);
@@ -1270,9 +1325,6 @@ namespace VectorPowerHub {
                 SwitchTab(1);
             });
 
-            trayMenu.MenuItems.Add(trayMenuSnappy);
-            trayMenu.MenuItems.Add(trayMenuEfficiency);
-            trayMenu.MenuItems.Add(trayMenuCold);
             trayMenu.MenuItems.Add(trayMenuCustom);
             trayMenu.MenuItems.Add(trayMenuBenchmark);
             trayMenu.MenuItems.Add(new MenuItem("-"));
@@ -1426,6 +1478,9 @@ namespace VectorPowerHub {
                 if (!string.IsNullOrEmpty(snap.SelectedGamingProfile)) {
                     currentSelectedGamingProfile = snap.SelectedGamingProfile;
                 }
+                if (!string.IsNullOrEmpty(snap.SelectedDesktopProfile)) {
+                    currentSelectedDesktopProfile = snap.SelectedDesktopProfile;
+                }
                 if (!string.IsNullOrEmpty(snap.ActiveProfile)) {
                     currentSelectedProfile = snap.ActiveProfile;
                 }
@@ -1457,13 +1512,30 @@ namespace VectorPowerHub {
             }
         }
 
+        private void SelectDesktopProfile(string profileId) {
+            currentSelectedDesktopProfile = profileId;
+            bridge.SetSelectedDesktopProfile(profileId);
+            if (currentSnapshot != null && !currentSnapshot.IsGameMode) {
+                bridge.ApplyProfile(profileId);
+                currentSelectedProfile = profileId;
+            }
+            UpdateAutoSwitchVisuals();
+            UpdateProfileCardsVisualState();
+
+            string desc = "Balanced Standby (EPP 50%, D3cold)";
+            if (profileId == "powersaver" || profileId == "silent") desc = "Silent Power Saver (EPP 80%, No Boost, D3cold)";
+            if (profileId == "cold") desc = "Cold & Quiet (GPU Clamped 2100 MHz)";
+            ShowNotificationBalloon("Game OFF Profile Changed", string.Format("Set Game OFF profile to: {0}", desc));
+        }
+
         private void ToggleAutoProfileSwitching() {
             isAutoProfileSwitchingEnabled = !isAutoProfileSwitchingEnabled;
             bridge.SetAutoProfileSwitching(isAutoProfileSwitchingEnabled);
             UpdateAutoSwitchVisuals();
 
             if (isAutoProfileSwitchingEnabled) {
-                ShowNotificationBalloon("Auto-Profiles Enabled", string.Format("Game ON ➔ {0} | Game OFF ➔ Desktop Standby (D3cold)", currentSelectedGamingProfile.ToUpper()));
+                string standbyDesc = (currentSelectedDesktopProfile == "powersaver" || currentSelectedDesktopProfile == "silent") ? "Silent Eco" : (currentSelectedDesktopProfile == "cold" ? "Cold" : "Balanced");
+                ShowNotificationBalloon("Auto-Profiles Enabled", string.Format("Game ON ➔ {0} | Game OFF ➔ {1} (D3cold)", currentSelectedGamingProfile.ToUpper(), standbyDesc));
             } else {
                 ShowNotificationBalloon("Auto-Profiles Disabled", "Manual profile lock engaged. Auto-switching suspended.");
             }
@@ -1487,9 +1559,23 @@ namespace VectorPowerHub {
                 trayMenuAutoSwitch.Checked = isAutoProfileSwitchingEnabled;
             }
 
+            if (trayMenuDesktopBalanced != null) trayMenuDesktopBalanced.Checked = (currentSelectedDesktopProfile == "desktop");
+            if (trayMenuDesktopSilent != null) trayMenuDesktopSilent.Checked = (currentSelectedDesktopProfile == "powersaver" || currentSelectedDesktopProfile == "silent");
+            if (trayMenuDesktopCold != null) trayMenuDesktopCold.Checked = (currentSelectedDesktopProfile == "cold");
+
+            if (comboStandbyProfile != null) {
+                int targetIndex = 0;
+                if (currentSelectedDesktopProfile == "powersaver" || currentSelectedDesktopProfile == "silent") targetIndex = 1;
+                else if (currentSelectedDesktopProfile == "cold") targetIndex = 2;
+                if (comboStandbyProfile.SelectedIndex != targetIndex) {
+                    comboStandbyProfile.SelectedIndex = targetIndex;
+                }
+            }
+
             if (lblFooterStatus != null) {
+                string standbyDesc = (currentSelectedDesktopProfile == "powersaver" || currentSelectedDesktopProfile == "silent") ? "Silent Eco" : (currentSelectedDesktopProfile == "cold" ? "Cold" : "Balanced");
                 string autoText = isAutoProfileSwitchingEnabled
-                    ? string.Format("Auto-Profiles: ON (Game ON ➔ {0} | Game OFF ➔ Desktop)", currentSelectedGamingProfile.ToUpper())
+                    ? string.Format("Auto-Profiles: ON (Game ON ➔ {0} | Game OFF ➔ {1})", currentSelectedGamingProfile.ToUpper(), standbyDesc)
                     : "Auto-Profiles: OFF (Manual Lock)";
                 lblFooterStatus.Text = string.Format("• ETW DXGI Active | {0} | D3cold Safe Architecture", autoText);
             }
@@ -1524,7 +1610,8 @@ namespace VectorPowerHub {
                     lblProfileBadge.ForeColor = ColorAccentGreen;
                     lblProfileBadge.BackColor = Color.FromArgb(12, 38, 24);
                 } else if (isAutoProfileSwitchingEnabled) {
-                    lblProfileBadge.Text = string.Format("DESKTOP STANDBY • AUTO: {0}", currentSelectedGamingProfile.ToUpper());
+                    string standbyDesc = (currentSelectedDesktopProfile == "powersaver" || currentSelectedDesktopProfile == "silent") ? "SILENT ECO" : (currentSelectedDesktopProfile == "cold" ? "COLD" : "BALANCED");
+                    lblProfileBadge.Text = string.Format("STANDBY: {0} • AUTO: {1}", standbyDesc, currentSelectedGamingProfile.ToUpper());
                     lblProfileBadge.ForeColor = ColorAccentCyan;
                     lblProfileBadge.BackColor = Color.FromArgb(16, 28, 40);
                 } else {
@@ -3238,6 +3325,7 @@ namespace VectorPowerHub {
         private MethodInfo applyProfileMethod = null;
         private MethodInfo applyCustomMethod = null;
         private MethodInfo setAutoSwitchMethod = null;
+        private MethodInfo setDesktopProfileMethod = null;
         private PropertyInfo currentSnapshotProp = null;
         private bool isEngineLoaded = false;
 
@@ -3300,6 +3388,7 @@ namespace VectorPowerHub {
                     applyProfileMethod = engineType.GetMethod("ApplyProfile");
                     applyCustomMethod = engineType.GetMethod("ApplyCustomProfile");
                     setAutoSwitchMethod = engineType.GetMethod("SetAutoProfileSwitching");
+                    setDesktopProfileMethod = engineType.GetMethod("SetSelectedDesktopProfile");
                     currentSnapshotProp = engineType.GetProperty("CurrentSnapshot");
 
                     MethodInfo startMethod = engineType.GetMethod("Start");
@@ -3352,6 +3441,7 @@ namespace VectorPowerHub {
                         snapshot.NvidiaMonitorName = ReadString(t, snapObj, "NvidiaMonitorName");
                         snapshot.ActiveProfile = ReadString(t, snapObj, "ActiveProfile");
                         snapshot.SelectedGamingProfile = ReadString(t, snapObj, "SelectedGamingProfile");
+                        snapshot.SelectedDesktopProfile = ReadString(t, snapObj, "SelectedDesktopProfile");
                         snapshot.AutoProfileSwitching = ReadBool(t, snapObj, "AutoProfileSwitching");
                         return snapshot;
                     }
@@ -3455,6 +3545,15 @@ namespace VectorPowerHub {
             }
         }
 
+        public void SetSelectedDesktopProfile(string profileId) {
+            if (isEngineLoaded && setDesktopProfileMethod != null && engineInstance != null) {
+                try {
+                    setDesktopProfileMethod.Invoke(engineInstance, new object[] { profileId });
+                    return;
+                } catch { }
+            }
+        }
+
         private void ExecuteFallbackProfile(string profileId) {
             if (profileId == "snappy") {
                 ApplyPowerCfgValues(0, 0, 4, 30);
@@ -3465,6 +3564,12 @@ namespace VectorPowerHub {
             } else if (profileId == "cold") {
                 ApplyPowerCfgValues(0, 0, 3, 20);
                 RunCmd("nvidia-smi -lgc 300,2100");
+            } else if (profileId == "powersaver" || profileId == "silent" || profileId == "eco") {
+                ApplyPowerCfgValues(0, 0, 0, 80);
+                RunCmd("nvidia-smi -rgc");
+            } else if (profileId == "desktop") {
+                ApplyPowerCfgValues(0, 0, 3, 50);
+                RunCmd("nvidia-smi -rgc");
             }
         }
 

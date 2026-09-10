@@ -27,6 +27,7 @@ public struct TelemetrySnapshot {
     public string NvidiaMonitorName;
     public string ActiveProfile;
     public string SelectedGamingProfile;
+    public string SelectedDesktopProfile;
     public bool AutoProfileSwitching;
 }
 
@@ -162,6 +163,29 @@ public class PowerCoreEngine : IDisposable {
                 }
             }
         }
+    }
+
+    private string _selectedDesktopProfile = "desktop";
+    public string SelectedDesktopProfile {
+        get {
+            lock (_syncLock) {
+                return _selectedDesktopProfile;
+            }
+        }
+        set {
+            lock (_syncLock) {
+                if (!string.IsNullOrEmpty(value)) {
+                    _selectedDesktopProfile = value.Trim().ToLowerInvariant();
+                    if (!_isGameMode && _autoProfileSwitching) {
+                        ApplyProfileInternal(_selectedDesktopProfile);
+                    }
+                }
+            }
+        }
+    }
+
+    public void SetSelectedDesktopProfile(string profileId) {
+        SelectedDesktopProfile = profileId;
     }
 
     public void SetAutoProfileSwitching(bool enabled) {
@@ -606,6 +630,12 @@ public class PowerCoreEngine : IDisposable {
                 // P-core 0, E-core 0, Boost Mode 3, EPP 50%, GPU stock
                 ApplySettingsInternal("desktop", 0, 0, 3, 50, 0);
                 break;
+            case "powersaver":
+            case "silent":
+            case "eco":
+                // P-core 0, E-core 0, Boost Mode 0 (Disabled), EPP 80%, GPU stock
+                ApplySettingsInternal("powersaver", 0, 0, 0, 80, 0);
+                break;
             case "custom":
                 ApplySettingsInternal("custom", _customPCoreMhz, _customECoreMhz, _customBoostMode, _customEpp, _customGpuClockMhz);
                 break;
@@ -621,7 +651,9 @@ public class PowerCoreEngine : IDisposable {
         }
 
         _activeProfile = profileId;
-        if (profileId != "desktop") {
+        if (profileId == "desktop" || profileId == "powersaver" || profileId == "silent" || profileId == "eco") {
+            _selectedDesktopProfile = profileId;
+        } else {
             _selectedGamingProfile = profileId;
         }
     }
@@ -1088,7 +1120,7 @@ public class PowerCoreEngine : IDisposable {
                         _gameModeExitTimer = 0.0;
 
                         if (_autoProfileSwitching) {
-                            ApplyProfileInternal("desktop");
+                            ApplyProfileInternal(_selectedDesktopProfile);
                             ShutdownNvml();
                         }
                     }
@@ -1186,6 +1218,7 @@ public class PowerCoreEngine : IDisposable {
         snapshot.NvidiaMonitorName = monitorName;
         snapshot.ActiveProfile = _activeProfile;
         snapshot.SelectedGamingProfile = _selectedGamingProfile;
+        snapshot.SelectedDesktopProfile = _selectedDesktopProfile;
         snapshot.AutoProfileSwitching = _autoProfileSwitching;
 
         lock (_syncLock) {
