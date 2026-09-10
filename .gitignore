@@ -1,0 +1,27 @@
+# Build outputs
+bin/
+obj/
+*.exe
+*.dll
+*.pdb
+*.obj
+
+# Previews & Screenshots
+previews/
+*.png
+*.jpg
+*.bmp
+
+# Telemetry outputs & logs
+game_fps.txt
+game_pcore_cap.txt
+*.log
+
+# IDE & Editor files
+.vs/
+.vscode/
+*.user
+*.suo
+
+# Graphify knowledge graph outputs
+graphify-out/
