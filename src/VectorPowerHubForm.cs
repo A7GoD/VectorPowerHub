@@ -9,6 +9,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows.Forms;
+using Microsoft.Win32;
 
 namespace VectorPowerHub {
     // -----------------------------------------------------------------------------------------
@@ -252,14 +253,24 @@ namespace VectorPowerHub {
         private MenuItem trayMenuDesktopBalanced;
         private MenuItem trayMenuDesktopSilent;
         private MenuItem trayMenuDesktopCold;
+        private MenuItem trayMenuStartup;
+        private CheckBox chkRunAtStartup;
         private Label lblStandbyTitle;
         private ComboBox comboStandbyProfile;
+        private bool startMinimizedToTray = false;
+        private bool hasShownOnce = false;
 
         // -----------------------------------------------------------------------------------------
         // CONSTRUCTOR
         // -----------------------------------------------------------------------------------------
-        public VectorPowerHubForm(int initialTab = 0) {
+        public VectorPowerHubForm(int initialTab = 0, bool startMinimized = false) {
             try { SetProcessDPIAware(); } catch { }
+
+            this.startMinimizedToTray = startMinimized;
+            if (startMinimized) {
+                this.WindowState = FormWindowState.Minimized;
+                this.ShowInTaskbar = false;
+            }
 
             this.Text = "Vector Power Hub - MSI Vector 16 HX";
             this.FormBorderStyle = FormBorderStyle.None;
@@ -277,6 +288,7 @@ namespace VectorPowerHub {
 
             // Build GUI Layout
             InitializeInterface();
+
             InitializeSystemTray();
 
             // Setup Single-Instance Wake Listener
@@ -351,6 +363,22 @@ namespace VectorPowerHub {
                 return;
             }
             base.WndProc(ref m);
+        }
+
+        protected override void SetVisibleCore(bool value) {
+            if (startMinimizedToTray && !hasShownOnce) {
+                value = false;
+                if (!this.IsHandleCreated) CreateHandle();
+            }
+            base.SetVisibleCore(value);
+        }
+
+        protected override void OnShown(EventArgs e) {
+            base.OnShown(e);
+            if (startMinimizedToTray) {
+                this.Hide();
+                ShowNotificationBalloon("Vector Power Hub Active", "Started with Windows in system tray. Hardware auto-profiles engaged.");
+            }
         }
 
         // -----------------------------------------------------------------------------------------
@@ -1244,6 +1272,20 @@ namespace VectorPowerHub {
             panelCustomTuner.Controls.Add(lblStandbyTitle);
             panelCustomTuner.Controls.Add(comboStandbyProfile);
 
+            chkRunAtStartup = new CheckBox();
+            chkRunAtStartup.Text = "🚀 Start with Windows (Run at Startup Minimized to Tray)";
+            chkRunAtStartup.Font = new Font("Segoe UI", 9f, FontStyle.Bold);
+            chkRunAtStartup.ForeColor = ColorAccentCyan;
+            chkRunAtStartup.BackColor = Color.Transparent;
+            chkRunAtStartup.Cursor = Cursors.Hand;
+            chkRunAtStartup.Location = new Point(18, 350);
+            chkRunAtStartup.Size = new Size(500, 28);
+            chkRunAtStartup.Checked = IsRunAtStartupEnabled();
+            chkRunAtStartup.Click += (s, e) => {
+                ToggleRunAtStartup();
+            };
+            panelCustomTuner.Controls.Add(chkRunAtStartup);
+
             this.Controls.Add(panelCustomTuner);
             panelCustomTuner.BringToFront();
         }
@@ -1329,6 +1371,11 @@ namespace VectorPowerHub {
             trayMenu.MenuItems.Add(trayMenuBenchmark);
             trayMenu.MenuItems.Add(new MenuItem("-"));
 
+            trayMenuStartup = new MenuItem("🚀 Start with Windows (Run at Startup)", (s, e) => ToggleRunAtStartup());
+            trayMenuStartup.Checked = IsRunAtStartupEnabled();
+            trayMenu.MenuItems.Add(trayMenuStartup);
+            trayMenu.MenuItems.Add(new MenuItem("-"));
+
             MenuItem mShow = new MenuItem("Open Dashboard", (s, e) => RestoreFromTray());
             MenuItem mExit = new MenuItem("Exit Vector Power Hub", (s, e) => ExitApplication());
             trayMenu.MenuItems.Add(mShow);
@@ -1378,6 +1425,9 @@ namespace VectorPowerHub {
                 this.BeginInvoke(new MethodInvoker(RestoreFromTray));
                 return;
             }
+            hasShownOnce = true;
+            startMinimizedToTray = false;
+            this.ShowInTaskbar = true;
             this.Show();
             this.WindowState = FormWindowState.Normal;
             this.BringToFront();
@@ -1578,6 +1628,67 @@ namespace VectorPowerHub {
                     ? string.Format("Auto-Profiles: ON (Game ON ➔ {0} | Game OFF ➔ {1})", currentSelectedGamingProfile.ToUpper(), standbyDesc)
                     : "Auto-Profiles: OFF (Manual Lock)";
                 lblFooterStatus.Text = string.Format("• ETW DXGI Active | {0} | D3cold Safe Architecture", autoText);
+            }
+
+            UpdateStartupVisuals();
+        }
+
+        private const string RunRegistryKey = @"Software\Microsoft\Windows\CurrentVersion\Run";
+        private const string RunValueName = "VectorPowerHub";
+
+        public static bool IsRunAtStartupEnabled() {
+            try {
+                using (RegistryKey key = Registry.CurrentUser.OpenSubKey(RunRegistryKey, false)) {
+                    if (key != null) {
+                        object val = key.GetValue(RunValueName);
+                        if (val != null) {
+                            return true;
+                        }
+                    }
+                }
+            } catch { }
+            return false;
+        }
+
+        public static void SetRunAtStartup(bool enable) {
+            try {
+                using (RegistryKey key = Registry.CurrentUser.OpenSubKey(RunRegistryKey, true)) {
+                    if (key != null) {
+                        if (enable) {
+                            string exePath = Application.ExecutablePath;
+                            if (string.IsNullOrEmpty(exePath) || exePath.IndexOf("powershell", StringComparison.OrdinalIgnoreCase) >= 0 || !File.Exists(exePath)) {
+                                if (File.Exists(@"C:\Users\a7god\VectorPowerHub.exe")) {
+                                    exePath = @"C:\Users\a7god\VectorPowerHub.exe";
+                                }
+                            }
+                            key.SetValue(RunValueName, string.Format("\"{0}\" /minimized", exePath));
+                        } else {
+                            key.DeleteValue(RunValueName, false);
+                        }
+                    }
+                }
+            } catch { }
+        }
+
+        private void ToggleRunAtStartup() {
+            bool newState = !IsRunAtStartupEnabled();
+            SetRunAtStartup(newState);
+            UpdateStartupVisuals();
+
+            if (newState) {
+                ShowNotificationBalloon("Run at Startup Enabled", "Vector Power Hub will launch automatically with Windows in the system tray.");
+            } else {
+                ShowNotificationBalloon("Run at Startup Disabled", "Vector Power Hub was removed from Windows startup.");
+            }
+        }
+
+        private void UpdateStartupVisuals() {
+            bool isEnabled = IsRunAtStartupEnabled();
+            if (trayMenuStartup != null && trayMenuStartup.Checked != isEnabled) {
+                trayMenuStartup.Checked = isEnabled;
+            }
+            if (chkRunAtStartup != null && chkRunAtStartup.Checked != isEnabled) {
+                chkRunAtStartup.Checked = isEnabled;
             }
         }
 
@@ -1959,7 +2070,14 @@ namespace VectorPowerHub {
         [STAThread]
         public static void Main(string[] args) {
             int initialTab = 0;
+            bool startMinimized = false;
             if (args != null && args.Length > 0) {
+                for (int i = 0; i < args.Length; i++) {
+                    string a = args[i].ToLowerInvariant();
+                    if (a == "/minimized" || a == "--minimized" || a == "/tray" || a == "--tray" || a == "/startup" || a == "--startup") {
+                        startMinimized = true;
+                    }
+                }
                 if (args[0] == "/test" || args[0] == "--test") {
                     Console.WriteLine("[TEST] Starting VectorPowerHubForm headless verification...");
                     using (VectorPowerHubForm form = new VectorPowerHubForm()) {
@@ -2014,33 +2132,35 @@ namespace VectorPowerHub {
             using (Mutex appMutex = new Mutex(true, "VectorPowerHub_SingleInstance_Mutex", out createdNew)) {
                 if (!createdNew) {
                     // Another instance is already running!
-                    // 1. Signal named EventWaitHandle to restore and activate primary instance
-                    try {
-                        using (EventWaitHandle wakeEvent = EventWaitHandle.OpenExisting("VectorPowerHub_WakeEvent")) {
-                            wakeEvent.Set();
-                        }
-                    } catch { }
-
-                    // 2. Broadcast registered window message
-                    try {
-                        if (WM_SHOW_HUB != 0) {
-                            PostMessage((IntPtr)HWND_BROADCAST, WM_SHOW_HUB, IntPtr.Zero, IntPtr.Zero);
-                        }
-                    } catch { }
-
-                    // 3. Bring existing process window to foreground
-                    try {
-                        Process current = Process.GetCurrentProcess();
-                        foreach (Process p in Process.GetProcessesByName(current.ProcessName)) {
-                            if (p.Id != current.Id) {
-                                if (p.MainWindowHandle != IntPtr.Zero) {
-                                    ShowWindow(p.MainWindowHandle, SW_RESTORE);
-                                    SetForegroundWindow(p.MainWindowHandle);
-                                }
-                                break;
+                    if (!startMinimized) {
+                        // 1. Signal named EventWaitHandle to restore and activate primary instance
+                        try {
+                            using (EventWaitHandle wakeEvent = EventWaitHandle.OpenExisting("VectorPowerHub_WakeEvent")) {
+                                wakeEvent.Set();
                             }
-                        }
-                    } catch { }
+                        } catch { }
+
+                        // 2. Broadcast registered window message
+                        try {
+                            if (WM_SHOW_HUB != 0) {
+                                PostMessage((IntPtr)HWND_BROADCAST, WM_SHOW_HUB, IntPtr.Zero, IntPtr.Zero);
+                            }
+                        } catch { }
+
+                        // 3. Bring existing process window to foreground
+                        try {
+                            Process current = Process.GetCurrentProcess();
+                            foreach (Process p in Process.GetProcessesByName(current.ProcessName)) {
+                                if (p.Id != current.Id) {
+                                    if (p.MainWindowHandle != IntPtr.Zero) {
+                                        ShowWindow(p.MainWindowHandle, SW_RESTORE);
+                                        SetForegroundWindow(p.MainWindowHandle);
+                                    }
+                                    break;
+                                }
+                            }
+                        } catch { }
+                    }
 
                     // Exit immediately without creating duplicate windows or tray icons
                     return;
@@ -2048,7 +2168,7 @@ namespace VectorPowerHub {
 
                 Application.EnableVisualStyles();
                 Application.SetCompatibleTextRenderingDefault(false);
-                Application.Run(new VectorPowerHubForm(initialTab));
+                Application.Run(new VectorPowerHubForm(initialTab, startMinimized));
                 GC.KeepAlive(appMutex);
             }
         }
