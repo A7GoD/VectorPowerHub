@@ -1933,7 +1933,7 @@ namespace VectorPowerHub {
             string pillText;
             Color pillBg, pillBorder, dotColor, textCol;
             if (isGameMode && !string.IsNullOrEmpty(activeGameName)) {
-                string displayGame = (activeGameName.Length > 16) ? activeGameName.Substring(0, 14) + ".." : activeGameName;
+                string displayGame = (activeGameName.Length > 24) ? activeGameName.Substring(0, 22) + ".." : activeGameName;
                 pillText = string.Format("Active Game: {0} (PID {1})", displayGame, activeGamePid);
                 pillBg = Color.FromArgb(14, 38, 26);
                 pillBorder = Color.FromArgb(24, 76, 50);

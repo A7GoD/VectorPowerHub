@@ -201,9 +201,6 @@ public class PowerCoreEngine : IDisposable {
     private DateTime _lastGameStoreScan = DateTime.MinValue;
 
     // Sustained Rendering Hysteresis State
-    private int _candidatePid;
-    private string _candidateName;
-    private double _candidateSustainedSeconds;
     private double _gameModeExitTimer;
 
     // ETW State
@@ -293,9 +290,6 @@ public class PowerCoreEngine : IDisposable {
         _currentFps = 0.0;
         _lastFpsCalcTime = DateTime.UtcNow;
 
-        _candidatePid = 0;
-        _candidateName = "";
-        _candidateSustainedSeconds = 0.0;
         _gameModeExitTimer = 0.0;
 
         _isSuspended = false;
@@ -408,9 +402,6 @@ public class PowerCoreEngine : IDisposable {
             _isGameMode = false;
             _currentGamePid = 0;
             _currentGameName = "";
-            _candidatePid = 0;
-            _candidateName = "";
-            _candidateSustainedSeconds = 0.0;
             _gameModeExitTimer = 0.0;
             _currentFps = 0.0;
 
@@ -971,6 +962,11 @@ public class PowerCoreEngine : IDisposable {
         if (elapsed <= 0.001) elapsed = 0.5;
         _lastFpsCalcTime = now;
 
+        // Ensure ETW session is healthy and actively capturing
+        if (!_isEtwActive || _etwSessionHandle == 0) {
+            StartEtw();
+        }
+
         // Periodic refresh of GameConfigStore cache
         RefreshGameConfigStore(false);
 
@@ -982,83 +978,97 @@ public class PowerCoreEngine : IDisposable {
             _currentGameFramesThisSecond = 0;
         }
 
-        // 2. Foreground Window Verification
+        // 2. Scan presenting processes for active game
+        int detectedGamePid = 0;
+        string detectedGameName = "";
+        double detectedFps = 0.0;
+
         int foregroundPid = Win32Native.GetForegroundProcessId();
 
-        // 3. Evaluate Game Detection State Machine with Sustained Rendering Hysteresis
+        // Pass 1: If current foreground window is a game and actively presenting, prioritize it
+        if (foregroundPid > 4) {
+            int fgFrames = 0;
+            frameCountsThisCycle.TryGetValue(foregroundPid, out fgFrames);
+            double fgFps = fgFrames / elapsed;
+            string fgName;
+            if (fgFps >= 10.0 && IsGameProcess(foregroundPid, out fgName)) {
+                detectedGamePid = foregroundPid;
+                detectedGameName = fgName;
+                detectedFps = fgFps;
+            }
+        }
+
+        // Pass 2: If foreground isn't a game (e.g. user clicked VectorPowerHub or on dual monitors),
+        // check if our current game is still presenting
+        if (detectedGamePid == 0 && _isGameMode && _currentGamePid > 0) {
+            try {
+                using (Process curP = Process.GetProcessById(_currentGamePid)) {
+                    if (!curP.HasExited) {
+                        int curFrames = 0;
+                        frameCountsThisCycle.TryGetValue(_currentGamePid, out curFrames);
+                        double curFps = curFrames / elapsed;
+                        if (curFps >= 5.0) {
+                            detectedGamePid = _currentGamePid;
+                            detectedGameName = _currentGameName;
+                            detectedFps = curFps;
+                        }
+                    }
+                }
+            } catch { }
+        }
+
+        // Pass 3: Scan all presenting processes in frameCountsThisCycle for any valid game
+        if (detectedGamePid == 0) {
+            double highestFps = 0.0;
+            foreach (KeyValuePair<int, int> kvp in frameCountsThisCycle) {
+                int pid = kvp.Key;
+                double fps = kvp.Value / elapsed;
+                if (fps >= 10.0 && pid > 4) {
+                    string gameName;
+                    if (IsGameProcess(pid, out gameName)) {
+                        if (fps > highestFps) {
+                            highestFps = fps;
+                            detectedGamePid = pid;
+                            detectedGameName = gameName;
+                            detectedFps = fps;
+                        }
+                    }
+                }
+            }
+        }
+
+        // 3. State Machine Transition & Profile Enforcement
         if (!_isBenchmarking) {
-            if (_isGameMode) {
-                // Active Game Mode: Calculate live FPS of current game
-                int activeFrames = 0;
-                frameCountsThisCycle.TryGetValue(_currentGamePid, out activeFrames);
-                _currentFps = activeFrames / elapsed;
+            if (detectedGamePid > 0) {
+                _gameModeExitTimer = 0.0;
+                _currentFps = detectedFps;
+                _currentGamePid = detectedGamePid;
+                _currentGameName = detectedGameName;
 
-                // Exit Hysteresis:
-                // When game leaves foreground OR drops below threshold (< 15 FPS) for > 2.5s, switch back to Desktop profile
-                bool isOutOfForeground = (foregroundPid != _currentGamePid);
-                bool isBelowThreshold = (_currentFps < 15.0);
-
-                if (isOutOfForeground || isBelowThreshold) {
+                if (!_isGameMode) {
+                    _isGameMode = true;
+                    ApplyProfileInternal(_selectedGamingProfile);
+                    EnsureNvmlInitialized();
+                }
+            } else {
+                if (_isGameMode) {
                     _gameModeExitTimer += elapsed;
-                    if (_gameModeExitTimer >= 2.5) {
-                        // Switch back to Desktop profile!
+                    // Sustained 3.0s idle / exit before reverting to desktop profile
+                    if (_gameModeExitTimer >= 3.0) {
                         _isGameMode = false;
                         _currentGamePid = 0;
                         _currentGameName = "";
                         _currentFps = 0.0;
-                        _candidatePid = 0;
-                        _candidateName = "";
-                        _candidateSustainedSeconds = 0.0;
                         _gameModeExitTimer = 0.0;
 
                         ApplyProfileInternal("desktop");
                         ShutdownNvml();
                     }
                 } else {
-                    _gameModeExitTimer = 0.0;
-                }
-            } else {
-                // Desktop Mode: Candidate verification
-                // Candidate process CAN ONLY be recognized as active game if:
-                // candidatePid == foregroundPid!
-                string procName = "";
-                if (foregroundPid > 4 && IsGameProcess(foregroundPid, out procName)) {
-                    int fgFrames = 0;
-                    frameCountsThisCycle.TryGetValue(foregroundPid, out fgFrames);
-                    double fgFps = fgFrames / elapsed;
-
-                    if (fgFps >= 15.0) {
-                        if (_candidatePid == foregroundPid) {
-                            _candidateSustainedSeconds += elapsed;
-                        } else {
-                            _candidatePid = foregroundPid;
-                            _candidateName = procName;
-                            _candidateSustainedSeconds = elapsed;
-                        }
-
-                        if (_candidateSustainedSeconds >= 2.0) {
-                            // Candidate sustained > 15 FPS for at least 2.0 consecutive seconds in the foreground!
-                            // ENGAGE GAME MODE!
-                            _isGameMode = true;
-                            _currentGamePid = _candidatePid;
-                            _currentGameName = _candidateName;
-                            _currentFps = fgFps;
-                            _gameModeExitTimer = 0.0;
-
-                            ApplyProfileInternal(_selectedGamingProfile);
-                            EnsureNvmlInitialized();
-                        }
-                    } else {
-                        _candidateSustainedSeconds = 0.0;
-                        _candidatePid = 0;
-                        _candidateName = "";
-                        _currentFps = 0.0;
-                    }
-                } else {
-                    _candidateSustainedSeconds = 0.0;
-                    _candidatePid = 0;
-                    _candidateName = "";
                     _currentFps = 0.0;
+                    _currentGamePid = 0;
+                    _currentGameName = "";
+                    _gameModeExitTimer = 0.0;
                 }
             }
         } else {
@@ -1329,27 +1339,34 @@ public class PowerCoreEngine : IDisposable {
     // ---------------------------------------------------------------------------------------------
     // ETW DXGI PRESENT EVENT TRACING
     // ---------------------------------------------------------------------------------------------
+    private static void ResetTraceProperties(IntPtr pProps, int propBufferSize) {
+        for (int i = 0; i < propBufferSize; i++) Marshal.WriteByte(pProps, i, 0);
+        EtwNative.EVENT_TRACE_PROPERTIES props = new EtwNative.EVENT_TRACE_PROPERTIES();
+        props.Wnode.BufferSize = (uint)propBufferSize;
+        props.Wnode.Flags = EtwNative.WNODE_FLAG_TRACED_GUID;
+        props.LogFileMode = EtwNative.EVENT_TRACE_REAL_TIME_MODE;
+        props.LoggerNameOffset = (uint)Marshal.SizeOf(typeof(EtwNative.EVENT_TRACE_PROPERTIES));
+        Marshal.StructureToPtr(props, pProps, false);
+    }
+
     private void StartEtw() {
         StopEtw(); // Ensure any running ETW session is completely closed and stopped
 
         string sessionName = "PowerCoreEngine_DXGI_ETW";
         int propBufferSize = 1024;
         _pSessionProperties = Marshal.AllocHGlobal(propBufferSize);
-        for (int i = 0; i < propBufferSize; i++) Marshal.WriteByte(_pSessionProperties, i, 0);
-
-        EtwNative.EVENT_TRACE_PROPERTIES props = new EtwNative.EVENT_TRACE_PROPERTIES();
-        props.Wnode.BufferSize = (uint)propBufferSize;
-        props.Wnode.Flags = EtwNative.WNODE_FLAG_TRACED_GUID;
-        props.LogFileMode = EtwNative.EVENT_TRACE_REAL_TIME_MODE;
-        props.LoggerNameOffset = (uint)Marshal.SizeOf(typeof(EtwNative.EVENT_TRACE_PROPERTIES));
-        Marshal.StructureToPtr(props, _pSessionProperties, false);
 
         // Terminate any leftover trace session with same name
+        ResetTraceProperties(_pSessionProperties, propBufferSize);
         EtwNative.ControlTraceW(0, sessionName, _pSessionProperties, EtwNative.EVENT_TRACE_CONTROL_STOP);
 
+        // Re-initialize clean properties before StartTraceW
+        ResetTraceProperties(_pSessionProperties, propBufferSize);
         uint startRes = EtwNative.StartTraceW(out _etwSessionHandle, sessionName, _pSessionProperties);
         if (startRes != 0) {
+            ResetTraceProperties(_pSessionProperties, propBufferSize);
             EtwNative.ControlTraceW(0, sessionName, _pSessionProperties, EtwNative.EVENT_TRACE_CONTROL_STOP);
+            ResetTraceProperties(_pSessionProperties, propBufferSize);
             startRes = EtwNative.StartTraceW(out _etwSessionHandle, sessionName, _pSessionProperties);
             if (startRes != 0) {
                 return;
@@ -1476,81 +1493,95 @@ public class PowerCoreEngine : IDisposable {
     // ---------------------------------------------------------------------------------------------
     // PROCESS INSPECTION & GAME FILTERING
     // ---------------------------------------------------------------------------------------------
-    private bool IsGameProcess(int pid, out string procName) {
-        procName = "";
+    private bool IsGameProcess(int pid, out string friendlyName) {
+        friendlyName = "";
         if (pid <= 4) return false;
 
         try {
             using (Process p = Process.GetProcessById(pid)) {
-                procName = p.ProcessName;
+                string procName = p.ProcessName;
                 if (EXCLUDE_NAMES.Contains(procName)) return false;
 
-                // 1. Instant check against Windows GameConfigStore cache
-                lock (_syncLock) {
-                    if (_knownGameExes.Contains(procName) || _knownGameExes.Contains(procName + ".exe")) {
-                        return true;
-                    }
-                }
-
-                // 2. Query process path
                 string fullPath = GetProcessPath(pid);
-                if (!string.IsNullOrEmpty(fullPath)) {
-                    string lowerPath = fullPath.ToLowerInvariant();
+                string lowerPath = (!string.IsNullOrEmpty(fullPath)) ? fullPath.ToLowerInvariant() : "";
 
-                    // Disregard system and Windows background directories
+                // Disregard system and Windows background directories
+                if (!string.IsNullOrEmpty(lowerPath)) {
                     if (lowerPath.Contains(@"\windows\system32\") ||
                         lowerPath.Contains(@"\windows\syswow64\") ||
                         lowerPath.Contains(@"\windows\systemapps\") ||
                         lowerPath.Contains(@"\windows\microsoft.net\")) {
                         return false;
                     }
+                }
 
-                    // Check exact known game path from GameConfigStore
-                    lock (_syncLock) {
-                        if (_knownGamePaths.Contains(fullPath) || _knownGamePaths.Contains(lowerPath)) {
-                            return true;
-                        }
+                bool isGame = false;
+
+                // 1. Instant check against Windows GameConfigStore cache
+                lock (_syncLock) {
+                    if (_knownGameExes.Contains(procName) || _knownGameExes.Contains(procName + ".exe")) {
+                        isGame = true;
+                    } else if (!string.IsNullOrEmpty(fullPath) && (_knownGamePaths.Contains(fullPath) || _knownGamePaths.Contains(lowerPath))) {
+                        isGame = true;
+                    } else if (!string.IsNullOrEmpty(fullPath)) {
                         string exeName = Path.GetFileName(fullPath);
                         if (!string.IsNullOrEmpty(exeName) && _knownGameExes.Contains(exeName)) {
-                            return true;
+                            isGame = true;
                         }
                     }
+                }
 
-                    // Check standard gaming root directories & launchers
+                // 2. Check standard gaming root directories & launchers
+                if (!isGame && !string.IsNullOrEmpty(lowerPath)) {
                     for (int i = 0; i < GAME_PATH_HINTS.Length; i++) {
-                        if (lowerPath.Contains(GAME_PATH_HINTS[i])) return true;
+                        if (lowerPath.Contains(GAME_PATH_HINTS[i])) {
+                            isGame = true;
+                            break;
+                        }
                     }
+                }
 
-                    // Unreal Engine Shipping binaries
+                // 3. Unreal Engine & Unity markers
+                if (!isGame) {
                     if (procName.EndsWith("-Win64-Shipping", StringComparison.OrdinalIgnoreCase) ||
                         procName.EndsWith("-Win32-Shipping", StringComparison.OrdinalIgnoreCase)) {
-                        return true;
+                        isGame = true;
+                    } else if (!string.IsNullOrEmpty(fullPath)) {
+                        try {
+                            string dir = Path.GetDirectoryName(fullPath);
+                            if (!string.IsNullOrEmpty(dir) && File.Exists(Path.Combine(dir, "UnityPlayer.dll"))) {
+                                isGame = true;
+                            }
+                        } catch { }
                     }
+                }
 
-                    // Unity game engine marker
+                if (!isGame) return false;
+
+                // Extract friendly game title from Steam directory structure if present
+                if (!string.IsNullOrEmpty(fullPath) && lowerPath.Contains(@"steamapps\common\")) {
+                    int idx = lowerPath.IndexOf(@"steamapps\common\") + @"steamapps\common\".Length;
+                    string sub = fullPath.Substring(idx);
+                    int slash = sub.IndexOf('\\');
+                    if (slash > 0) {
+                        friendlyName = sub.Substring(0, slash);
+                    }
+                }
+
+                if (string.IsNullOrEmpty(friendlyName)) {
                     try {
-                        string dir = Path.GetDirectoryName(fullPath);
-                        if (!string.IsNullOrEmpty(dir) && File.Exists(Path.Combine(dir, "UnityPlayer.dll"))) {
-                            return true;
+                        string desc = p.MainModule.FileVersionInfo.FileDescription;
+                        if (!string.IsNullOrEmpty(desc) && desc.Length > 2 && !desc.Equals(procName, StringComparison.OrdinalIgnoreCase)) {
+                            friendlyName = desc;
                         }
                     } catch { }
-
-                    // Unknown non-game executable (Office, installers, background services)
-                    return false;
-                } else {
-                    // Protected process / anti-cheat access denied:
-                    // Only accept if registered in known game store or Unreal shipping signature
-                    lock (_syncLock) {
-                        if (_knownGameExes.Contains(procName) || _knownGameExes.Contains(procName + ".exe")) {
-                            return true;
-                        }
-                    }
-                    if (procName.EndsWith("-Win64-Shipping", StringComparison.OrdinalIgnoreCase) ||
-                        procName.EndsWith("-Win32-Shipping", StringComparison.OrdinalIgnoreCase)) {
-                        return true;
-                    }
-                    return false;
                 }
+
+                if (string.IsNullOrEmpty(friendlyName)) {
+                    friendlyName = procName;
+                }
+
+                return true;
             }
         } catch {
             return false;
