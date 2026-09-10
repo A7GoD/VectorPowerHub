@@ -25,6 +25,7 @@ namespace VectorPowerHub {
             }
 
             this.Text = "Vector Power Hub - MSI Vector 16 HX";
+            try { this.Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath); } catch { }
             this.FormBorderStyle = FormBorderStyle.None;
             this.StartPosition = FormStartPosition.CenterScreen;
             this.Size = new Size(1160, 800);

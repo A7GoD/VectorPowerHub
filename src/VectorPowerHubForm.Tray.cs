@@ -78,7 +78,12 @@ namespace VectorPowerHub {
             trayIcon = new NotifyIcon();
             trayIcon.Text = "Vector Power Hub - Snappy-Pacing Active";
             trayIcon.ContextMenu = trayMenu;
-            trayIcon.Icon = GenerateAppIcon();
+            if (this.Icon != null) {
+                trayIcon.Icon = this.Icon;
+            } else {
+                try { trayIcon.Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath); } catch { }
+                if (trayIcon.Icon == null) trayIcon.Icon = GenerateAppIcon();
+            }
             trayIcon.Visible = true;
             trayIcon.DoubleClick += (s, e) => RestoreFromTray();
         }
