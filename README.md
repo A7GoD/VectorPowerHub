@@ -61,32 +61,33 @@
 
 ## Building from Source
 
-VectorPowerHub compiles cleanly with the standard Windows built-in `csc.exe` compiler with **0 external NuGet dependencies**:
+VectorPowerHub uses GNU `make` and the built-in Windows 64-bit `csc.exe` compiler with **0 external NuGet dependencies**:
 
 ```cmd
-build.cmd
+make           # Build bin/VectorPowerHub.exe
+make test      # Run headless telemetry self-test
+make run       # Launch the application
+make clean     # Remove build artifacts
 ```
 
-Or invoke the compiler directly:
-
-```cmd
-C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe /target:winexe /out:bin\VectorPowerHub.exe /unsafe /r:System.Windows.Forms.dll /r:System.Drawing.dll /r:System.dll /r:System.Core.dll src\VectorPowerHubForm.cs src\PowerCoreEngine.cs
-```
-
-### CLI Verification Modes
+### Make Targets & Verification
 
 - **Headless Telemetry Test**:
   ```cmd
-  bin\VectorPowerHub.exe /test
+  make test
   ```
 - **Direct Tab Launch**:
   ```cmd
-  bin\VectorPowerHub.exe /topology     # Opens directly to 24-Core Topology view
-  bin\VectorPowerHub.exe /bench        # Opens directly to Benchmark suite
+  make topology     # Opens directly to 24-Core Topology view
+  make bench        # Opens directly to Benchmark suite
   ```
 - **Offscreen UI Rendering (Visual QA)**:
   ```cmd
-  bin\VectorPowerHub.exe /render       # Generates tab0_preview.png, tab1_preview.png, tab2_preview.png in previews/
+  make render       # Generates tab0_preview.png, tab1_preview.png, tab2_preview.png in previews/
+  ```
+- **Knowledge Graph**:
+  ```cmd
+  make graphify     # Re-extracts AST and updates graphify knowledge graph
   ```
 
 ---
