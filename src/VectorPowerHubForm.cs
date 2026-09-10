@@ -600,7 +600,7 @@ namespace VectorPowerHub {
             // 2. Hero Section (Y = 52, H = 160)
             int heroTop = 52;
             int heroH = 160;
-            int fpsW = Math.Max(290, (int)(w * 0.28));
+            int fpsW = Math.Max(350, (int)(w * 0.33));
             int pwrW = w - 32 - fpsW - 12;
 
             cardFps.Location = new Point(16, heroTop);
@@ -1776,6 +1776,7 @@ namespace VectorPowerHub {
                             form.Location = new Point(-2000, -2000);
                             form.Show();
                             Application.DoEvents();
+                            Thread.Sleep(2200);
                             form.OnTelemetryTick(null, EventArgs.Empty);
                             Application.DoEvents();
 
@@ -2023,9 +2024,9 @@ namespace VectorPowerHub {
             }
 
             // Title Left
-            using (Font fTitle = new Font("Segoe UI", 9.5f, FontStyle.Bold))
+            using (Font fTitle = new Font("Segoe UI", 9f, FontStyle.Bold))
             using (Brush bTitle = new SolidBrush(VectorPowerHubForm.ColorTextMuted)) {
-                g.DrawString("TOTAL PLATFORM DRAW (215W MAXIMUM CEILING)", fTitle, bTitle, 16, 10);
+                g.DrawString("TOTAL PLATFORM DRAW (215W CEILING)", fTitle, bTitle, 16, 10);
             }
 
             // Monospace Jitter-Free Readout Right (Consolas 13pt Bold)
