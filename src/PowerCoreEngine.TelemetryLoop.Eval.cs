@@ -8,7 +8,7 @@ using System.Threading;
 using Microsoft.Win32;
 
 public partial class PowerCoreEngine : IDisposable {
-        private void EvaluateCycleEnforcement(double elapsed, int detectedGamePid, string detectedGameName, double detectedFps, Dictionary<int, int> frameCountsThisCycle) {
+        private void EvaluateCycleEnforcement(double elapsed, int detectedGamePid, string detectedGameName, double detectedFps, Dictionary<int, int> frameCountsThisCycle, int foregroundPid) {
             DateTime now = DateTime.UtcNow;
         // 3. State Machine Transition & Profile Enforcement
         if (!_isBenchmarking) {
@@ -27,18 +27,31 @@ public partial class PowerCoreEngine : IDisposable {
                 }
             } else {
                 if (_isGameMode) {
-                    _gameModeExitTimer += elapsed;
-                    // Sustained 3.0s idle / exit before reverting to desktop profile
-                    if (_gameModeExitTimer >= 3.0) {
-                        _isGameMode = false;
-                        _currentGamePid = 0;
-                        _currentGameName = "";
-                        _currentFps = 0.0;
-                        _gameModeExitTimer = 0.0;
+                    bool holdForHub = false;
+                    if ((foregroundPid == _currentHubPid || foregroundPid <= 0) && _currentGamePid > 0) {
+                        try {
+                            using (Process curP = Process.GetProcessById(_currentGamePid)) {
+                                if (!curP.HasExited) holdForHub = true;
+                            }
+                        } catch { }
+                    }
 
-                        if (_autoProfileSwitching) {
-                            ApplyProfileInternal(_selectedDesktopProfile);
-                            ShutdownNvml();
+                    if (holdForHub) {
+                        _gameModeExitTimer = 0.0;
+                    } else {
+                        _gameModeExitTimer += elapsed;
+                        // Sustained 15.0s idle / exit before reverting to desktop profile
+                        if (_gameModeExitTimer >= 15.0) {
+                            _isGameMode = false;
+                            _currentGamePid = 0;
+                            _currentGameName = "";
+                            _currentFps = 0.0;
+                            _gameModeExitTimer = 0.0;
+
+                            if (_autoProfileSwitching) {
+                                ApplyProfileInternal(_selectedDesktopProfile);
+                                ShutdownNvml();
+                            }
                         }
                     }
                 } else {
@@ -94,15 +107,22 @@ public partial class PowerCoreEngine : IDisposable {
         string monitorName = "";
         bool isDisplayAttached = CheckNvidiaDisplayAttached(out monitorName);
 
-        if (isDisplayAttached) {
-            // NVIDIA GPU is actively driving an attached display (e.g. BENQ EX271Q) in D0 active state!
-            // Query NVML safely because the GPU is already awake refreshing the display.
-            ReadGpuTelemetrySafe(out gpuWatts, out gpuClockMhz, out gpuTempC, out gpuUtilPct, out gpuStatus);
-            gpuStatus = string.Format("Active (D0) • Driving {0} (P8)", monitorName);
-        } else if (_isGameMode || _isBenchmarking) {
+        if (_isGameMode || _isBenchmarking) {
             // 3D Game or Benchmark is actively rendering on discrete GPU
             ReadGpuTelemetrySafe(out gpuWatts, out gpuClockMhz, out gpuTempC, out gpuUtilPct, out gpuStatus);
-            gpuStatus = "3D Active (140W Dynamic Boost)";
+            if (isDisplayAttached) {
+                gpuStatus = string.Format("3D Active ({0:F1}W) • Driving {1}", gpuWatts, monitorName);
+            } else {
+                gpuStatus = string.Format("3D Active ({0:F1}W Dynamic Boost)", gpuWatts);
+            }
+        } else if (isDisplayAttached) {
+            // NVIDIA GPU is actively driving an attached display (e.g. BENQ EX271Q) in D0 active state
+            ReadGpuTelemetrySafe(out gpuWatts, out gpuClockMhz, out gpuTempC, out gpuUtilPct, out gpuStatus);
+            if (gpuWatts > 25.0 || gpuUtilPct > 20) {
+                gpuStatus = string.Format("3D Active ({0:F1}W) • Driving {1}", gpuWatts, monitorName);
+            } else {
+                gpuStatus = string.Format("Active (D0) • Driving {0}", monitorName);
+            }
         } else {
             // No display attached to NVIDIA and no game rendering!
             // Discrete GPU is in true D3cold sleep. DO NOT POLL! Zero NVML calls.

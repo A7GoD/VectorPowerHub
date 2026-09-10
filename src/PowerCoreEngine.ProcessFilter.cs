@@ -11,8 +11,12 @@ public partial class PowerCoreEngine : IDisposable {
     // PROCESS INSPECTION & GAME FILTERING
     // ---------------------------------------------------------------------------------------------
     private bool IsGameProcess(int pid, out string friendlyName) {
+        return IsGameProcess(pid, false, out friendlyName);
+    }
+
+    private bool IsGameProcess(int pid, bool fallbackPermissive, out string friendlyName) {
         friendlyName = "";
-        if (pid <= 4) return false;
+        if (pid <= 4 || pid == _currentHubPid) return false;
 
         try {
             using (Process p = Process.GetProcessById(pid)) {
@@ -58,7 +62,7 @@ public partial class PowerCoreEngine : IDisposable {
                     }
                 }
 
-                // 3. Unreal Engine & Unity markers
+                // 3. Unreal Engine, Unity, and common game markers
                 if (!isGame) {
                     if (procName.EndsWith("-Win64-Shipping", StringComparison.OrdinalIgnoreCase) ||
                         procName.EndsWith("-Win32-Shipping", StringComparison.OrdinalIgnoreCase)) {
@@ -71,6 +75,11 @@ public partial class PowerCoreEngine : IDisposable {
                             }
                         } catch { }
                     }
+                }
+
+                // 4. Hardware Fallback: If discrete GPU is heavily active, allow non-system process
+                if (!isGame && fallbackPermissive) {
+                    isGame = true;
                 }
 
                 if (!isGame) return false;
@@ -90,6 +99,15 @@ public partial class PowerCoreEngine : IDisposable {
                         string desc = p.MainModule.FileVersionInfo.FileDescription;
                         if (!string.IsNullOrEmpty(desc) && desc.Length > 2 && !desc.Equals(procName, StringComparison.OrdinalIgnoreCase)) {
                             friendlyName = desc;
+                        }
+                    } catch { }
+                }
+
+                if (string.IsNullOrEmpty(friendlyName)) {
+                    try {
+                        string winTitle = p.MainWindowTitle;
+                        if (!string.IsNullOrEmpty(winTitle) && winTitle.Length > 2) {
+                            friendlyName = winTitle.Trim();
                         }
                     } catch { }
                 }
@@ -120,6 +138,36 @@ public partial class PowerCoreEngine : IDisposable {
         return "";
     }
 
-    // ---------------------------------------------------------------------------------------------
+    private int FindRunningGameCandidate(out string gameName) {
+        gameName = "";
+        try {
+            Process[] procs = Process.GetProcesses();
+            for (int i = 0; i < procs.Length; i++) {
+                Process p = procs[i];
+                int pid = p.Id;
+                if (pid <= 4 || pid == _currentHubPid) continue;
+                string pName = p.ProcessName.ToLowerInvariant();
+                if (pName.Contains("crash") || pName.Contains("handler") || pName.Contains("helper")) continue;
+                string fName;
+                if (IsGameProcess(pid, false, out fName)) {
+                    gameName = fName;
+                    return pid;
+                }
+            }
+            for (int i = 0; i < procs.Length; i++) {
+                Process p = procs[i];
+                int pid = p.Id;
+                if (pid <= 4 || pid == _currentHubPid) continue;
+                string pName = p.ProcessName.ToLowerInvariant();
+                if (pName.Contains("crash") || pName.Contains("handler") || pName.Contains("helper")) continue;
+                string fName;
+                if (IsGameProcess(pid, true, out fName)) {
+                    gameName = fName;
+                    return pid;
+                }
+            }
+        } catch { }
+        return 0;
+    }
 
-}
+}

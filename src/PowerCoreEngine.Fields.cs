@@ -37,6 +37,8 @@ public partial class PowerCoreEngine : IDisposable {
     private IntPtr _pLogfile;
     private EtwNative.EventRecordCallback _etwCallbackDelegate;
     private Thread _etwThread;
+    private DateTime _lastEtwAttempt = DateTime.MinValue;
+    private int _currentHubPid;
     private const ulong INVALID_PROCESSTRACE_HANDLE = 0xFFFFFFFFFFFFFFFF;
 
     // Frame & Presentation Tracking
@@ -90,13 +92,16 @@ public partial class PowerCoreEngine : IDisposable {
         "EADesktop", "Battle.net", "RiotClientServices", "services", "lsass", "csrss", "smss",
         "wininit", "winlogon", "fontdrvhost", "spoolsv", "wlanext", "rundll32", "dllhost", "taskhostw",
         "devenv", "code", "rider", "clion", "studio64", "idea64",
-        "msedgewebview2", "WebViewHost", "chrome_crashpad_handler", "vcredist", "dotnet"
+        "msedgewebview2", "WebViewHost", "chrome_crashpad_handler", "crashpad_handler",
+        "CrashReportClient", "CrashReportClientEditor", "UnrealCEFSubProcess", "EpicWebHelper",
+        "EasyAntiCheat", "EasyAntiCheat_EOS", "BEService", "BattlEye", "UnityCrashHandler64",
+        "UnityCrashHandler32", "EOSBootStrapper", "vcredist", "dotnet"
     };
 
     private static readonly string[] GAME_PATH_HINTS = new string[] {
-        "steamapps", "common", "epic games", "riot games", "xboxgames",
-        "ubisoft", "ea games", "gog galaxy", "games", "game",
-        "binaries\\win64", "binaries\\win32", "binaries/win64", "binaries/win32"
+        "steamapps", "steamlibrary", @"\common\", "epic games", "riot games", "xboxgames",
+        "ubisoft", "ea games", "gog galaxy", @"\games\",
+        @"binaries\win64", @"binaries\win32", "binaries/win64", "binaries/win32"
     };
 
     // ---------------------------------------------------------------------------------------------
@@ -116,6 +121,7 @@ public partial class PowerCoreEngine : IDisposable {
         _isGameMode = false;
         _currentFps = 0.0;
         _lastFpsCalcTime = DateTime.UtcNow;
+        try { _currentHubPid = Process.GetCurrentProcess().Id; } catch { _currentHubPid = 0; }
 
         _gameModeExitTimer = 0.0;
 

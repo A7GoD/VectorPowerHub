@@ -68,8 +68,22 @@ namespace VectorPowerHub {
             }
 
             // Monospace Jitter-Free Digits (Consolas 28pt Bold)
-            string fpsStr = (isGameMode && fps > 0.1) ? fps.ToString("F1") : "0.0";
-            Color numColor = (isGameMode && fps > 0.1) ? VectorPowerHubForm.ColorAccentCyan : VectorPowerHubForm.ColorTextWhite;
+            string fpsStr;
+            string unitStr;
+            if (isGameMode) {
+                if (fps > 0.1) {
+                    fpsStr = fps.ToString("F1");
+                    unitStr = "FPS";
+                } else {
+                    fpsStr = "3D ON";
+                    unitStr = "ACTIVE";
+                }
+            } else {
+                fpsStr = "0.0";
+                unitStr = "FPS";
+            }
+
+            Color numColor = isGameMode ? VectorPowerHubForm.ColorAccentCyan : VectorPowerHubForm.ColorTextWhite;
             using (Font fVal = new Font("Consolas", 28f, FontStyle.Bold))
             using (Brush bVal = new SolidBrush(numColor)) {
                 g.DrawString(fpsStr, fVal, bVal, 14, 36);
@@ -77,7 +91,7 @@ namespace VectorPowerHub {
 
                 using (Font fUnit = new Font("Segoe UI", 11f, FontStyle.Bold))
                 using (Brush bUnit = new SolidBrush(VectorPowerHubForm.ColorAccentCyan)) {
-                    g.DrawString("FPS", fUnit, bUnit, 14 + sz.Width - 4, 50);
+                    g.DrawString(unitStr, fUnit, bUnit, 14 + sz.Width - 4, 50);
                 }
             }
 
@@ -120,9 +134,12 @@ namespace VectorPowerHub {
             }
 
             // Subtitle
+            string subText = (isGameMode && fps <= 0.1)
+                ? "Hardware Fallback • RTX 5070 Dynamic Telemetry Engine"
+                : "DirectX DXGI SwapChain Hook (ETW Event 42)";
             using (Font fSub = new Font("Segoe UI", 8.5f, FontStyle.Regular))
             using (Brush bSub = new SolidBrush(VectorPowerHubForm.ColorTextDim)) {
-                g.DrawString("DirectX DXGI SwapChain Hook (ETW Event 42)", fSub, bSub, 14, 126);
+                g.DrawString(subText, fSub, bSub, 14, 126);
             }
         }
     }

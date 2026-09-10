@@ -21,6 +21,9 @@ public partial class PowerCoreEngine : IDisposable {
     }
 
     private void StartEtw() {
+        if ((DateTime.UtcNow - _lastEtwAttempt).TotalSeconds < 15.0) return;
+        _lastEtwAttempt = DateTime.UtcNow;
+
         StopEtw(); // Ensure any running ETW session is completely closed and stopped
 
         string sessionName = "PowerCoreEngine_DXGI_ETW";
@@ -40,6 +43,7 @@ public partial class PowerCoreEngine : IDisposable {
             ResetTraceProperties(_pSessionProperties, propBufferSize);
             startRes = EtwNative.StartTraceW(out _etwSessionHandle, sessionName, _pSessionProperties);
             if (startRes != 0) {
+                _isEtwActive = false;
                 return;
             }
         }
@@ -54,7 +58,7 @@ public partial class PowerCoreEngine : IDisposable {
         logfile.LoggerName = sessionName;
         logfile.ProcessTraceMode = EtwNative.PROCESS_TRACE_MODE_REAL_TIME | EtwNative.PROCESS_TRACE_MODE_EVENT_RECORD;
         logfile.EventRecordCallback = Marshal.GetFunctionPointerForDelegate(_etwCallbackDelegate);
-        logfile.CurrentEvent = new byte[88];
+        logfile.CurrentEvent = new byte[96];
         logfile.LogfileHeader = new byte[280];
 
         _pLogfile = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(EtwNative.EVENT_TRACE_LOGFILEW)));
@@ -62,6 +66,7 @@ public partial class PowerCoreEngine : IDisposable {
 
         _etwTraceHandle = EtwNative.OpenTraceW(_pLogfile);
         if (_etwTraceHandle == INVALID_PROCESSTRACE_HANDLE || _etwTraceHandle == 0) {
+            _isEtwActive = false;
             return;
         }
 

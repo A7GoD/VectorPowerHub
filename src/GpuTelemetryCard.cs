@@ -117,19 +117,19 @@ namespace VectorPowerHub {
             string pillText;
             Color pillBg, pillBorder, dotColor, textCol;
 
-            if (isNvidiaDisplayAttached) {
+            if (isGameMode || gpuPowerW > 25.0) {
+                pillText = !string.IsNullOrEmpty(gpuStatus) ? gpuStatus : "Active Rendering (D0) • Full 140W Dynamic Headroom";
+                pillBg = Color.FromArgb(42, 32, 14);
+                pillBorder = Color.FromArgb(88, 64, 22);
+                dotColor = VectorPowerHubForm.ColorAccentGold;
+                textCol = VectorPowerHubForm.ColorAccentGold;
+            } else if (isNvidiaDisplayAttached) {
                 string mon = string.IsNullOrEmpty(nvidiaMonitorName) ? "BenQ EX2710Q" : nvidiaMonitorName;
                 pillText = string.Format("Active (D0) • Driving {0}", mon);
                 pillBg = Color.FromArgb(14, 38, 26);
                 pillBorder = Color.FromArgb(24, 76, 50);
                 dotColor = VectorPowerHubForm.ColorAccentGreen;
                 textCol = VectorPowerHubForm.ColorAccentGreen;
-            } else if (isGameMode || gpuPowerW > 25.0) {
-                pillText = "Active Rendering (D0) • Full 140W Dynamic Headroom";
-                pillBg = Color.FromArgb(42, 32, 14);
-                pillBorder = Color.FromArgb(88, 64, 22);
-                dotColor = VectorPowerHubForm.ColorAccentGold;
-                textCol = VectorPowerHubForm.ColorAccentGold;
             } else if (!string.IsNullOrEmpty(gpuStatus) && gpuStatus.Contains("D3cold")) {
                 pillText = gpuStatus;
                 pillBg = Color.FromArgb(14, 38, 26);

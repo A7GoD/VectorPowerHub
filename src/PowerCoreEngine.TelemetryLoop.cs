@@ -56,21 +56,40 @@ public partial class PowerCoreEngine : IDisposable {
 
         int foregroundPid = Win32Native.GetForegroundProcessId();
 
+        // Pass 0: Foreground Window Hysteresis (Alt-Tab to VectorPowerHub)
+        // If user clicks or Alt-Tabs to VectorPowerHub to look at UI, preserve active game state!
+        if ((foregroundPid == _currentHubPid || foregroundPid <= 0) && _isGameMode && _currentGamePid > 0) {
+            bool isAlive = false;
+            try {
+                using (Process curP = Process.GetProcessById(_currentGamePid)) {
+                    if (!curP.HasExited) isAlive = true;
+                }
+            } catch { }
+
+            if (isAlive) {
+                detectedGamePid = _currentGamePid;
+                detectedGameName = _currentGameName;
+                int curFrames = 0;
+                frameCountsThisCycle.TryGetValue(_currentGamePid, out curFrames);
+                double curFps = curFrames / elapsed;
+                detectedFps = (curFps >= 1.0) ? curFps : _currentFps;
+            }
+        }
+
         // Pass 1: If current foreground window is a game and actively presenting, prioritize it
-        if (foregroundPid > 4) {
+        if (detectedGamePid == 0 && foregroundPid > 4 && foregroundPid != _currentHubPid) {
             int fgFrames = 0;
             frameCountsThisCycle.TryGetValue(foregroundPid, out fgFrames);
             double fgFps = fgFrames / elapsed;
             string fgName;
-            if (fgFps >= 10.0 && IsGameProcess(foregroundPid, out fgName)) {
+            if (fgFps >= 10.0 && IsGameProcess(foregroundPid, false, out fgName)) {
                 detectedGamePid = foregroundPid;
                 detectedGameName = fgName;
                 detectedFps = fgFps;
             }
         }
 
-        // Pass 2: If foreground isn't a game (e.g. user clicked VectorPowerHub or on dual monitors),
-        // check if our current game is still presenting
+        // Pass 2: If foreground isn't a game, check if our current game is still presenting
         if (detectedGamePid == 0 && _isGameMode && _currentGamePid > 0) {
             try {
                 using (Process curP = Process.GetProcessById(_currentGamePid)) {
@@ -94,9 +113,9 @@ public partial class PowerCoreEngine : IDisposable {
             foreach (KeyValuePair<int, int> kvp in frameCountsThisCycle) {
                 int pid = kvp.Key;
                 double fps = kvp.Value / elapsed;
-                if (fps >= 10.0 && pid > 4) {
+                if (fps >= 10.0 && pid > 4 && pid != _currentHubPid) {
                     string gameName;
-                    if (IsGameProcess(pid, out gameName)) {
+                    if (IsGameProcess(pid, false, out gameName)) {
                         if (fps > highestFps) {
                             highestFps = fps;
                             detectedGamePid = pid;
@@ -108,7 +127,48 @@ public partial class PowerCoreEngine : IDisposable {
             }
         }
 
+        // Pass 4: Hardware Fallback (GPU Load > 30% and Power > 35W)
+        // If ETW fails or game uses Vulkan/OpenGL or non-standard swapchain:
+        if (detectedGamePid == 0) {
+            double fbWatts; int fbClock, fbTemp, fbUtil; string fbStatus;
+            ReadGpuTelemetrySafe(out fbWatts, out fbClock, out fbTemp, out fbUtil, out fbStatus);
+            if (fbUtil >= 30 && fbWatts >= 35.0) {
+                // 4a. If previously in game mode and process is still alive:
+                if (_isGameMode && _currentGamePid > 0) {
+                    try {
+                        using (Process curP = Process.GetProcessById(_currentGamePid)) {
+                            if (!curP.HasExited) {
+                                detectedGamePid = _currentGamePid;
+                                detectedGameName = _currentGameName;
+                                detectedFps = _currentFps;
+                            }
+                        }
+                    } catch { }
+                }
 
-            EvaluateCycleEnforcement(elapsed, detectedGamePid, detectedGameName, detectedFps, frameCountsThisCycle);
+                // 4b. Check current foreground window with permissive fallback
+                if (detectedGamePid == 0 && foregroundPid > 4 && foregroundPid != _currentHubPid) {
+                    string fgName;
+                    if (IsGameProcess(foregroundPid, true, out fgName)) {
+                        detectedGamePid = foregroundPid;
+                        detectedGameName = fgName;
+                        detectedFps = 0.0;
+                    }
+                }
+
+                // 4c. Scan running processes to find active game candidate
+                if (detectedGamePid == 0) {
+                    string candidateName;
+                    int candidatePid = FindRunningGameCandidate(out candidateName);
+                    if (candidatePid > 0) {
+                        detectedGamePid = candidatePid;
+                        detectedGameName = candidateName;
+                        detectedFps = 0.0;
+                    }
+                }
+            }
         }
+
+        EvaluateCycleEnforcement(elapsed, detectedGamePid, detectedGameName, detectedFps, frameCountsThisCycle, foregroundPid);
+    }
 }

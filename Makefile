@@ -4,7 +4,7 @@
 # ==============================================================================
 
 CSC = C:/Windows/Microsoft.NET/Framework64/v4.0.30319/csc.exe
-CSCFLAGS = /target:winexe /unsafe /r:System.Windows.Forms.dll /r:System.Drawing.dll /r:System.dll /r:System.Core.dll
+CSCFLAGS = /target:winexe /unsafe /win32manifest:app.manifest /r:System.Windows.Forms.dll /r:System.Drawing.dll /r:System.dll /r:System.Core.dll
 
 SRCS = src/*.cs
 TARGET = bin/VectorPowerHub.exe
