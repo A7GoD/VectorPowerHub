@@ -18,6 +18,13 @@ namespace VectorPowerHub {
         public static void Main(string[] args) {
             int initialTab = 0;
             bool startMinimized = false;
+            bool savedStartMin;
+            int savedLastTab;
+            if (PowerCoreEngine.TryLoadGuiSettings(out savedStartMin, out savedLastTab)) {
+                startMinimized = savedStartMin;
+                if (savedLastTab >= 0 && savedLastTab <= 2) initialTab = savedLastTab;
+            }
+
             if (args != null && args.Length > 0) {
                 for (int i = 0; i < args.Length; i++) {
                     string a = args[i].ToLowerInvariant();
@@ -39,6 +46,8 @@ namespace VectorPowerHub {
                         Console.WriteLine(string.Format("  GPU Status Badge: {0}", s.GpuStatus));
                         Console.WriteLine(string.Format("  Display Attached: {0} ({1})", s.IsNvidiaDisplayAttached, s.NvidiaMonitorName));
                         Console.WriteLine(string.Format("  Active Profile: {0}", form.currentSelectedProfile));
+                        PowerCoreEngine.Instance.SaveUserSettings();
+                        Console.WriteLine(string.Format("  Config Persisted: {0} (Exists: {1})", PowerCoreEngine.SettingsFilePath, File.Exists(PowerCoreEngine.SettingsFilePath)));
                         Console.WriteLine("[TEST] VectorPowerHubForm verification completed successfully!");
                     }
                     return;
@@ -142,20 +151,6 @@ namespace VectorPowerHub {
                 Application.SetCompatibleTextRenderingDefault(false);
                 Application.Run(new VectorPowerHubForm(initialTab, startMinimized));
                 GC.KeepAlive(appMutex);
-            }
-        }
-
-        private static void RenderControlHierarchy(Control parent, Graphics g, Point origin) {
-            foreach (Control c in parent.Controls) {
-                if (!c.Visible || c.Width <= 0 || c.Height <= 0) continue;
-                Point p = new Point(origin.X + c.Left, origin.Y + c.Top);
-                using (Bitmap childBmp = new Bitmap(c.Width, c.Height)) {
-                    c.DrawToBitmap(childBmp, new Rectangle(0, 0, c.Width, c.Height));
-                    g.DrawImage(childBmp, p);
-                }
-                if (c.Controls.Count > 0) {
-                    RenderControlHierarchy(c, g, p);
-                }
             }
         }
 

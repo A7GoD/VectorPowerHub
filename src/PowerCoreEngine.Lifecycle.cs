@@ -19,8 +19,8 @@ public partial class PowerCoreEngine : IDisposable {
             InitPdh();
             StartEtw();
 
-            // Set initial state to desktop profile
-            ApplyProfileInternal("desktop");
+            // Set initial state to saved desktop profile
+            ApplyProfileInternal(!string.IsNullOrEmpty(_selectedDesktopProfile) ? _selectedDesktopProfile : "desktop");
 
             _workerThread = new Thread(TelemetryWorkerLoop);
             _workerThread.IsBackground = true;

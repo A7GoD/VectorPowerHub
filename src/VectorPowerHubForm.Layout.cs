@@ -164,6 +164,9 @@ namespace VectorPowerHub {
             if (tabIndex == 2) {
                 topologyControl.Invalidate();
             }
+            try {
+                PowerCoreEngine.SaveGuiSettingsOnly(startMinimizedToTray, tabIndex);
+            } catch { }
         }
 
 

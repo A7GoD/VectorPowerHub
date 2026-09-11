@@ -100,7 +100,9 @@ public partial class PowerCoreEngine : IDisposable {
         "msedgewebview2", "WebViewHost", "chrome_crashpad_handler", "crashpad_handler",
         "CrashReportClient", "CrashReportClientEditor", "UnrealCEFSubProcess", "EpicWebHelper",
         "EasyAntiCheat", "EasyAntiCheat_EOS", "BEService", "BattlEye", "UnityCrashHandler64",
-        "UnityCrashHandler32", "EOSBootStrapper", "vcredist", "dotnet"
+        "UnityCrashHandler32", "EOSBootStrapper", "vcredist", "dotnet",
+        "stremio", "stremio-runtime", "vlc", "mpc-hc", "mpc-hc64", "mpc-be", "mpc-be64",
+        "potplayer", "potplayermini", "potplayermini64", "kodi", "plex", "plexmediaplayer"
     };
 
     private static readonly string[] GAME_PATH_HINTS = new string[] {
@@ -149,6 +151,9 @@ public partial class PowerCoreEngine : IDisposable {
 
         // Initial scan of Windows GameConfigStore
         LoadGameConfigStore();
+
+        // Load saved user preferences from settings.json
+        LoadUserSettings();
     }
 
     // ---------------------------------------------------------------------------------------------

@@ -30,6 +30,7 @@ public partial class PowerCoreEngine : IDisposable {
             if (_isGameMode) {
                 _selectedGamingProfile = "custom";
             }
+            SaveUserSettings();
         }
     }
 

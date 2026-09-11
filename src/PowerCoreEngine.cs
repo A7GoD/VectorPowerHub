@@ -54,6 +54,7 @@ public partial class PowerCoreEngine : IDisposable {
                     if (_isGameMode || !_autoProfileSwitching) {
                         ApplyProfileInternal(_selectedGamingProfile);
                     }
+                    SaveUserSettings();
                 }
             }
         }
@@ -72,6 +73,7 @@ public partial class PowerCoreEngine : IDisposable {
                         ApplyProfileInternal("desktop");
                     }
                 }
+                SaveUserSettings();
             }
         }
     }
@@ -90,6 +92,7 @@ public partial class PowerCoreEngine : IDisposable {
                     if (!_isGameMode && _autoProfileSwitching) {
                         ApplyProfileInternal(_selectedDesktopProfile);
                     }
+                    SaveUserSettings();
                 }
             }
         }

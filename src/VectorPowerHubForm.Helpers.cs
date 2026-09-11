@@ -47,6 +47,19 @@ namespace VectorPowerHub {
             } catch { }
         }
 
+        private static void RenderControlHierarchy(Control parent, Graphics g, Point origin) {
+            foreach (Control c in parent.Controls) {
+                if (!c.Visible || c.Width <= 0 || c.Height <= 0) continue;
+                Point p = new Point(origin.X + c.Left, origin.Y + c.Top);
+                using (Bitmap childBmp = new Bitmap(c.Width, c.Height)) {
+                    c.DrawToBitmap(childBmp, new Rectangle(0, 0, c.Width, c.Height));
+                    g.DrawImage(childBmp, p);
+                }
+                if (c.Controls.Count > 0) {
+                    RenderControlHierarchy(c, g, p);
+                }
+            }
+        }
 
     }
 }
