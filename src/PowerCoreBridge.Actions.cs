@@ -62,6 +62,9 @@ namespace VectorPowerHub {
             } else if (profileId == "cold") {
                 ApplyPowerCfgValues(0, 0, 3, 20);
                 RunCmd("nvidia-smi -lgc 300,2100");
+            } else if (profileId == "guaranteed") {
+                ApplyPowerCfgValues(0, 0, 6, 25);
+                RunCmd("nvidia-smi -rgc");
             } else if (profileId == "powersaver" || profileId == "silent" || profileId == "eco") {
                 ApplyPowerCfgValues(0, 0, 0, 80);
                 RunCmd("nvidia-smi -rgc");

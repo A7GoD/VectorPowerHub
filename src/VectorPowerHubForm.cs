@@ -25,6 +25,7 @@ namespace VectorPowerHub {
         private MenuItem trayMenuSnappy;
         private MenuItem trayMenuEfficiency;
         private MenuItem trayMenuCold;
+        private MenuItem trayMenuGuaranteed;
         private MenuItem trayMenuCustom;
         private MenuItem trayMenuBenchmark;
 
@@ -62,6 +63,7 @@ namespace VectorPowerHub {
         private ProfileCard cardProfileSnappy;
         private ProfileCard cardProfileEfficiency;
         private ProfileCard cardProfileCold;
+        private ProfileCard cardProfileGuaranteed;
 
         // Custom Tuner Overlay (Global shortcut)
         private Panel panelCustomTuner;
@@ -134,6 +136,7 @@ namespace VectorPowerHub {
         private MenuItem trayMenuDesktopBalanced;
         private MenuItem trayMenuDesktopSilent;
         private MenuItem trayMenuDesktopCold;
+        private MenuItem trayMenuDesktopGuaranteed;
         private MenuItem trayMenuStartup;
         private CheckBox chkRunAtStartup;
         private Label lblCustomTunerHint;

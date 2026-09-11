@@ -107,7 +107,7 @@ namespace VectorPowerHub {
             } else if (profileId == "cold") {
                 bridge.ApplyProfile("cold");
             } else if (profileId == "guaranteed") {
-                bridge.ApplyCustomProfile(0, 0, 6, 25, 0);
+                bridge.ApplyProfile("guaranteed");
             }
         }
 

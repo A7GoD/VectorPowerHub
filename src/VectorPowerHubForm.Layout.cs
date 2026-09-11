@@ -80,8 +80,8 @@ namespace VectorPowerHub {
             panelTopologyView.Location = new Point(16, viewTop);
             panelTopologyView.Size = new Size(viewW, viewH);
 
-            // Inside Profiles View (3 cards)
-            int pCardW = (viewW - 24) / 3;
+            // Inside Profiles View (4 cards)
+            int pCardW = (viewW - 36) / 4;
             cardProfileSnappy.Location = new Point(0, 0);
             cardProfileSnappy.Size = new Size(pCardW, viewH);
 
@@ -90,6 +90,9 @@ namespace VectorPowerHub {
 
             cardProfileCold.Location = new Point((pCardW + 12) * 2, 0);
             cardProfileCold.Size = new Size(pCardW, viewH);
+
+            cardProfileGuaranteed.Location = new Point((pCardW + 12) * 3, 0);
+            cardProfileGuaranteed.Size = new Size(pCardW, viewH);
 
             // Inside Benchmark View
             benchProgressBar.Width = viewW - 28;

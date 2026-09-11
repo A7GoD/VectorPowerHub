@@ -75,26 +75,32 @@ namespace VectorPowerHub {
             cardProfileSnappy.IsActive = (currentSelectedProfile == "snappy" || (!isGameOn && currentSelectedProfile == "desktop"));
             cardProfileEfficiency.IsActive = (currentSelectedProfile == "clamped" || (!isGameOn && (currentSelectedProfile == "powersaver" || currentSelectedProfile == "silent")));
             cardProfileCold.IsActive = (currentSelectedProfile == "cold");
+            cardProfileGuaranteed.IsActive = (currentSelectedProfile == "guaranteed");
 
             cardProfileSnappy.IsDesignatedGamingProfile = (currentSelectedGamingProfile == "snappy");
             cardProfileEfficiency.IsDesignatedGamingProfile = (currentSelectedGamingProfile == "clamped");
             cardProfileCold.IsDesignatedGamingProfile = (currentSelectedGamingProfile == "cold");
+            cardProfileGuaranteed.IsDesignatedGamingProfile = (currentSelectedGamingProfile == "guaranteed");
 
             cardProfileSnappy.IsDesignatedIdleProfile = (currentSelectedDesktopProfile == "desktop");
             cardProfileEfficiency.IsDesignatedIdleProfile = (currentSelectedDesktopProfile == "powersaver" || currentSelectedDesktopProfile == "silent");
             cardProfileCold.IsDesignatedIdleProfile = (currentSelectedDesktopProfile == "cold");
+            cardProfileGuaranteed.IsDesignatedIdleProfile = (currentSelectedDesktopProfile == "guaranteed");
 
             cardProfileSnappy.IsGameMode = isGameOn;
             cardProfileEfficiency.IsGameMode = isGameOn;
             cardProfileCold.IsGameMode = isGameOn;
+            cardProfileGuaranteed.IsGameMode = isGameOn;
 
             cardProfileSnappy.AutoSwitchEnabled = isAutoProfileSwitchingEnabled;
             cardProfileEfficiency.AutoSwitchEnabled = isAutoProfileSwitchingEnabled;
             cardProfileCold.AutoSwitchEnabled = isAutoProfileSwitchingEnabled;
+            cardProfileGuaranteed.AutoSwitchEnabled = isAutoProfileSwitchingEnabled;
 
             cardProfileSnappy.Invalidate();
             cardProfileEfficiency.Invalidate();
             cardProfileCold.Invalidate();
+            cardProfileGuaranteed.Invalidate();
 
             if (lblProfileBadge != null) {
                 string activeId = (currentSnapshot != null && !string.IsNullOrEmpty(currentSnapshot.ActiveProfile))
@@ -102,12 +108,12 @@ namespace VectorPowerHub {
                     : currentSelectedProfile.ToLowerInvariant();
 
                 if (isGameOn) {
-                    string gameName = (activeId == "clamped") ? "EFFICIENCY" : (activeId == "cold" ? "COLD & QUIET" : (activeId == "custom" ? "CUSTOM" : "SNAPPY"));
+                    string gameName = (activeId == "clamped") ? "EFFICIENCY" : (activeId == "cold" ? "COLD & QUIET" : (activeId == "guaranteed" ? "GUARANTEED" : (activeId == "custom" ? "CUSTOM" : "SNAPPY")));
                     lblProfileBadge.Text = string.Format("LIVE: {0} (GAME ON)", gameName);
                     lblProfileBadge.ForeColor = ColorAccentGreen;
                     lblProfileBadge.BackColor = Color.FromArgb(12, 38, 24);
                 } else if (isAutoProfileSwitchingEnabled) {
-                    string standbyName = (activeId == "powersaver" || activeId == "silent") ? "SILENT ECO" : (activeId == "cold" ? "COLD" : (activeId == "custom" ? "CUSTOM" : "BALANCED"));
+                    string standbyName = (activeId == "powersaver" || activeId == "silent") ? "SILENT ECO" : (activeId == "cold" ? "COLD" : (activeId == "guaranteed" ? "GUARANTEED" : (activeId == "custom" ? "CUSTOM" : "BALANCED")));
                     lblProfileBadge.Text = string.Format("LIVE: {0} (STANDBY)", standbyName);
                     lblProfileBadge.ForeColor = ColorAccentCyan;
                     lblProfileBadge.BackColor = Color.FromArgb(16, 28, 40);
@@ -122,6 +128,7 @@ namespace VectorPowerHub {
             if (trayMenuSnappy != null) trayMenuSnappy.Checked = (currentSelectedGamingProfile == "snappy");
             if (trayMenuEfficiency != null) trayMenuEfficiency.Checked = (currentSelectedGamingProfile == "clamped");
             if (trayMenuCold != null) trayMenuCold.Checked = (currentSelectedGamingProfile == "cold");
+            if (trayMenuGuaranteed != null) trayMenuGuaranteed.Checked = (currentSelectedGamingProfile == "guaranteed");
             if (trayMenuCustom != null) trayMenuCustom.Checked = (currentSelectedProfile == "custom");
         }
 

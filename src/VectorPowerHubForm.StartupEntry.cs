@@ -87,6 +87,14 @@ namespace VectorPowerHub {
                                 r3.CleanedOnePercentLow = 0.0; r3.RawOnePercentLow = 0.0;
                                 r3.AvgCpuPowerW = 28.5; r3.AvgGpuPowerW = 85.2; r3.AvgTotalPowerW = 113.7;
                                 form.benchResultsGrid.AddOrUpdateResult(r3);
+
+                                BenchmarkResultInfo r4 = new BenchmarkResultInfo();
+                                r4.ProfileId = "guaranteed"; r4.ProfileName = "★ Guaranteed Curve (Mode 6 / EPP 25%)";
+                                r4.CleanedAvgFps = 142.5; r4.RawAvgFps = 140.8;
+                                r4.CleanedOnePercentLow = 96.2; r4.RawOnePercentLow = 88.5;
+                                r4.AvgCpuPowerW = 48.0; r4.AvgGpuPowerW = 118.3; r4.AvgTotalPowerW = 166.3;
+                                r4.EfficiencyScore = 142.5 / 166.3;
+                                form.benchResultsGrid.AddOrUpdateResult(r4);
                             }
                             Application.DoEvents();
 

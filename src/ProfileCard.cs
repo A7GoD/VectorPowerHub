@@ -100,15 +100,17 @@ namespace VectorPowerHub {
                 g.FillRectangle(b, 12, 0, w - 24, isHighlighted ? 3 : 2);
             }
 
-            using (Font fTitle = new Font("Segoe UI", 11.5f, FontStyle.Bold)) {
+            float titleSize = (w < 290) ? 10f : 11.5f;
+            using (Font fTitle = new Font("Segoe UI", titleSize, FontStyle.Bold)) {
                 using (Brush b = new SolidBrush(AccentColor)) {
-                    g.DrawString(Title, fTitle, b, 14, 12);
+                    g.DrawString(Title, fTitle, b, 12, 12);
                 }
             }
 
-            using (Font fSub = new Font("Segoe UI", 7.5f, FontStyle.Bold)) {
+            float subSize = (w < 290) ? 7f : 7.5f;
+            using (Font fSub = new Font("Segoe UI", subSize, FontStyle.Bold)) {
                 using (Brush b = new SolidBrush(VectorPowerHubForm.ColorTextMuted)) {
-                    g.DrawString(Subtitle, fSub, b, 16, 36);
+                    g.DrawString(Subtitle, fSub, b, 13, 36);
                 }
             }
 

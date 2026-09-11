@@ -27,6 +27,7 @@ namespace VectorPowerHub {
             string name = "Snappy-Pacing";
             if (profileId == "clamped") name = "Sweet-Spot Efficiency (4.9 GHz)";
             if (profileId == "cold") name = "Cold & Quiet (GPU 2100 MHz)";
+            if (profileId == "guaranteed") name = "Guaranteed Curve (Mode 6)";
 
             trayIcon.Text = string.Format("Vector Power Hub - {0} Active", name);
 
@@ -51,6 +52,7 @@ namespace VectorPowerHub {
             string desc = "Balanced Standby (EPP 50%, D3cold)";
             if (profileId == "powersaver" || profileId == "silent") desc = "Silent Power Saver (EPP 80%, No Boost, D3cold)";
             if (profileId == "cold") desc = "Cold & Quiet (GPU Clamped 2100 MHz)";
+            if (profileId == "guaranteed") desc = "Guaranteed Curve (EPP 25%, Boost Mode 6)";
             ShowNotificationBalloon("Game OFF Profile Changed", string.Format("Set Game OFF profile to: {0}", desc));
         }
 
@@ -60,7 +62,7 @@ namespace VectorPowerHub {
             UpdateAutoSwitchVisuals();
 
             if (isAutoProfileSwitchingEnabled) {
-                string standbyDesc = (currentSelectedDesktopProfile == "powersaver" || currentSelectedDesktopProfile == "silent") ? "Silent Eco" : (currentSelectedDesktopProfile == "cold" ? "Cold" : "Balanced");
+                string standbyDesc = (currentSelectedDesktopProfile == "powersaver" || currentSelectedDesktopProfile == "silent") ? "Silent Eco" : (currentSelectedDesktopProfile == "cold" ? "Cold" : (currentSelectedDesktopProfile == "guaranteed" ? "Guaranteed" : "Balanced"));
                 ShowNotificationBalloon("Auto-Profiles Enabled", string.Format("Game ON ➔ {0} | Game OFF ➔ {1} (D3cold)", currentSelectedGamingProfile.ToUpper(), standbyDesc));
             } else {
                 ShowNotificationBalloon("Auto-Profiles Disabled", "Manual profile lock engaged. Auto-switching suspended.");
@@ -88,6 +90,7 @@ namespace VectorPowerHub {
             if (trayMenuDesktopBalanced != null) trayMenuDesktopBalanced.Checked = (currentSelectedDesktopProfile == "desktop");
             if (trayMenuDesktopSilent != null) trayMenuDesktopSilent.Checked = (currentSelectedDesktopProfile == "powersaver" || currentSelectedDesktopProfile == "silent");
             if (trayMenuDesktopCold != null) trayMenuDesktopCold.Checked = (currentSelectedDesktopProfile == "cold");
+            if (trayMenuDesktopGuaranteed != null) trayMenuDesktopGuaranteed.Checked = (currentSelectedDesktopProfile == "guaranteed");
 
             if (lblFooterStatus != null) {
                 string autoText = isAutoProfileSwitchingEnabled ? "Auto-Profiles: Active (Game Sync)" : "Auto-Profiles: Off (Manual Lock)";

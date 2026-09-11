@@ -24,12 +24,12 @@ namespace VectorPowerHub {
                 "COMPETITIVE MAX FPS (DEFAULT)",
                 ColorAccentCyan,
                 new string[] {
-                    "• Boost Mode 4 (Efficient Aggressive)",
-                    "• Unbounded Freq (Up to 5.5 GHz Peak)",
-                    "• EPP 30% (Eager GPU Power Release)",
-                    "• Full 140W RTX 5070 Mobile Headroom",
-                    "• Instant draw-call responsiveness",
-                    "• Default competitive esports profile"
+                    "• Boost Mode 4 (Eff. Aggressive)",
+                    "• Unbounded Freq (5.5 GHz Peak)",
+                    "• EPP 30% (Eager GPU Power)",
+                    "• Full 140W RTX 5070 Headroom",
+                    "• Instant draw-call response",
+                    "• Default competitive esports"
                 },
                 "ACTIVE",
                 true
@@ -40,15 +40,15 @@ namespace VectorPowerHub {
 
             cardProfileEfficiency = new ProfileCard(
                 "✦ Sweet-Spot Efficiency",
-                "CLAMPED 4.9 GHz (ZERO STARVATION)",
+                "CLAMPED 4.9 GHz (58W CEILING)",
                 ColorAccentGold,
                 new string[] {
-                    "• P-Core Clamped to 4.9 GHz (4900 MHz)",
-                    "• E-Core Clamped to 2.8 GHz (2800 MHz)",
-                    "• 58W CPU Ceiling (Zero Starvation)",
-                    "• 100% Guaranteed 140W GPU Budget",
-                    "• Rock-solid frame pacing & thermals",
-                    "• Ideal for heavy AAA open-world titles"
+                    "• P-Core Clamped 4.9 GHz",
+                    "• E-Core Clamped 2.8 GHz",
+                    "• 58W CPU Ceiling (Zero Starve)",
+                    "• 100% Guaranteed 140W GPU",
+                    "• Rock-solid frame pacing",
+                    "• Ideal for heavy AAA titles"
                 },
                 "APPLY PROFILE",
                 false
@@ -59,15 +59,15 @@ namespace VectorPowerHub {
 
             cardProfileCold = new ProfileCard(
                 "❄ Cold & Quiet",
-                "GPU-SHIFT 2100 MHz (74°C THERMALS)",
+                "GPU-SHIFT 2100 MHz (74°C)",
                 ColorAccentBlue,
                 new string[] {
-                    "• GPU Clock Clamped: 2100 MHz (~100W)",
-                    "• CPU Boost Mode 3 (Efficient Enabled)",
+                    "• GPU Clamped: 2100 MHz (~100W)",
+                    "• Boost Mode 3 (Efficient Enabled)",
                     "• EPP: 20% (Max Draw Latency)",
-                    "• Sub-74°C Sustained GPU Core Temp",
-                    "• Ultra-Quiet Acoustic Operation",
-                    "• Perfect for stealth & night sessions"
+                    "• Sub-74°C Sustained GPU Temp",
+                    "• Ultra-Quiet Acoustic Profile",
+                    "• Perfect for stealth sessions"
                 },
                 "APPLY PROFILE",
                 false
@@ -76,9 +76,29 @@ namespace VectorPowerHub {
             cardProfileCold.IdleTargetClicked += (s, e) => SelectDesktopProfile("cold");
             cardProfileCold.ProfileClicked += (s, e) => SelectProfile("cold");
 
+            cardProfileGuaranteed = new ProfileCard(
+                "★ Guaranteed Curve",
+                "MODE 6 AT GUARANTEED (PEAK IPC)",
+                ColorAccentPurple,
+                new string[] {
+                    "• Boost Mode 6 (Eff. Aggressive)",
+                    "• Guaranteed Base Curve Anchor",
+                    "• EPP 25% (Ultra-Responsive Bias)",
+                    "• Full 140W RTX 5070 Headroom",
+                    "• Sustained peak IPC headroom",
+                    "• Benchmark validated curve"
+                },
+                "APPLY PROFILE",
+                false
+            );
+            cardProfileGuaranteed.GamingTargetClicked += (s, e) => SelectProfile("guaranteed");
+            cardProfileGuaranteed.IdleTargetClicked += (s, e) => SelectDesktopProfile("guaranteed");
+            cardProfileGuaranteed.ProfileClicked += (s, e) => SelectProfile("guaranteed");
+
             panelProfilesView.Controls.Add(cardProfileSnappy);
             panelProfilesView.Controls.Add(cardProfileEfficiency);
             panelProfilesView.Controls.Add(cardProfileCold);
+            panelProfilesView.Controls.Add(cardProfileGuaranteed);
             this.Controls.Add(panelProfilesView);
 
             // Custom Tuner Overlay
