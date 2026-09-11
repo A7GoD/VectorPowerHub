@@ -9,8 +9,11 @@ CSCFLAGS = /target:winexe /unsafe /win32manifest:app.manifest /win32icon:app.ico
 SRCS = src/*.cs
 TARGET = bin/VectorPowerHub.exe
 TARGET_WIN = bin\VectorPowerHub.exe
+MSI_TARGET = bin/VectorPowerHub.msi
+MSI_TARGET_WIN = bin\VectorPowerHub.msi
+BUILD_MSI_EXE = bin\BuildMsi.exe
 
-.PHONY: all clean run test topology bench render graphify help
+.PHONY: all clean run test topology bench render graphify help msi install uninstall
 
 all: $(TARGET)
 
@@ -30,6 +33,18 @@ topology: $(TARGET)
 
 bench: $(TARGET)
 	@start "" $(TARGET_WIN) /bench
+
+msi: $(TARGET)
+	@if not exist $(BUILD_MSI_EXE) "$(CSC)" /out:$(BUILD_MSI_EXE) tools\BuildMsi.cs
+	@$(BUILD_MSI_EXE)
+
+install: msi
+	@echo [INSTALL] Installing $(MSI_TARGET_WIN)...
+	@msiexec /i $(MSI_TARGET_WIN) /qn
+
+uninstall:
+	@echo [UNINSTALL] Uninstalling VectorPowerHub...
+	@if exist $(MSI_TARGET_WIN) (msiexec /x $(MSI_TARGET_WIN) /qn) else (msiexec /x {B95C3C8F-7B83-49F1-99A8-1E92A1A88301} /qn)
 
 render: $(TARGET)
 	@echo [RENDER] Rendering offscreen UI snapshots to previews/...
@@ -51,6 +66,9 @@ help:
 	@echo   make run      - Launch VectorPowerHub
 	@echo   make topology - Launch directly to 24-core topology view
 	@echo   make bench    - Launch directly to benchmark suite
+	@echo   make msi      - Build Windows Installer $(MSI_TARGET_WIN)
+	@echo   make install  - Install MSI silently (/qn)
+	@echo   make uninstall- Uninstall MSI cleanly (/qn)
 	@echo   make render   - Render offscreen UI preview images to previews/
 	@echo   make graphify - Re-extract and update graphify knowledge graph
 	@echo   make clean    - Remove build artifacts
