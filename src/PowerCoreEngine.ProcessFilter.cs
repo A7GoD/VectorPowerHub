@@ -65,7 +65,9 @@ public partial class PowerCoreEngine : IDisposable {
                 // 3. Unreal Engine, Unity, and common game markers
                 if (!isGame) {
                     if (procName.EndsWith("-Win64-Shipping", StringComparison.OrdinalIgnoreCase) ||
-                        procName.EndsWith("-Win32-Shipping", StringComparison.OrdinalIgnoreCase)) {
+                        procName.EndsWith("-Win32-Shipping", StringComparison.OrdinalIgnoreCase) ||
+                        procName.IndexOf("Discovery", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                        procName.IndexOf("TheFinals", StringComparison.OrdinalIgnoreCase) >= 0) {
                         isGame = true;
                     } else if (!string.IsNullOrEmpty(fullPath)) {
                         try {

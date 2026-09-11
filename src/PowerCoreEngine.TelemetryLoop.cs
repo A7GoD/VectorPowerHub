@@ -184,6 +184,13 @@ public partial class PowerCoreEngine : IDisposable {
             double dwmFps = dwmFrames / elapsed;
             if (dwmFps >= 5.0) return Math.Round(dwmFps, 1);
         }
+
+        // Hardware Fallback: If 3D graphics workload is drawing high power, estimate real-time rendering rate
+        if (_currentSnapshot.GpuPowerW >= 35.0 && _currentSnapshot.GpuUtilPct >= 20) {
+            double targetHz = (_currentSnapshot.IsNvidiaDisplayAttached) ? 179.0 : 240.0;
+            double estFps = targetHz * (_currentSnapshot.GpuUtilPct / 100.0);
+            if (estFps >= 30.0) return Math.Round(estFps, 1);
+        }
         return 0.0;
     }
-}
+}
