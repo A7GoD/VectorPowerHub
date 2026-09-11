@@ -63,7 +63,7 @@ public partial class PowerCoreEngine : IDisposable {
             }
         } else {
             // Benchmarking active: Track FPS of active game if present
-            if (detectedGamePid > 0 && _currentGamePid <= 0) {
+            if (detectedGamePid > 0 && (_currentGamePid <= 0 || (detectedFps > 0.0 && _currentFps <= 0.0))) {
                 _currentGamePid = detectedGamePid;
                 _currentGameName = detectedGameName;
             }

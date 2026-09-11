@@ -10,37 +10,40 @@ using Microsoft.Win32;
 public partial class PowerCoreEngine : IDisposable {
     // ETW DXGI PRESENT EVENT TRACING
     // ---------------------------------------------------------------------------------------------
-    private static void ResetTraceProperties(IntPtr pProps, int propBufferSize) {
-        for (int i = 0; i < propBufferSize; i++) Marshal.WriteByte(pProps, i, 0);
+    private static void FormatTraceProperties(IntPtr pProps, int totalSize, int propSize, string sessionName) {
+        for (int i = 0; i < totalSize; i++) Marshal.WriteByte(pProps, i, 0);
         EtwNative.EVENT_TRACE_PROPERTIES props = new EtwNative.EVENT_TRACE_PROPERTIES();
-        props.Wnode.BufferSize = (uint)propBufferSize;
+        props.Wnode.BufferSize = (uint)totalSize;
         props.Wnode.Flags = EtwNative.WNODE_FLAG_TRACED_GUID;
+        props.Wnode.ClientContext = 1;
         props.LogFileMode = EtwNative.EVENT_TRACE_REAL_TIME_MODE;
-        props.LoggerNameOffset = (uint)Marshal.SizeOf(typeof(EtwNative.EVENT_TRACE_PROPERTIES));
+        props.LoggerNameOffset = (uint)propSize;
         Marshal.StructureToPtr(props, pProps, false);
+
+        byte[] nameBytes = Encoding.Unicode.GetBytes(sessionName + "\0");
+        Marshal.Copy(nameBytes, 0, new IntPtr(pProps.ToInt64() + propSize), nameBytes.Length);
     }
 
     private void StartEtw() {
         if ((DateTime.UtcNow - _lastEtwAttempt).TotalSeconds < 15.0) return;
         _lastEtwAttempt = DateTime.UtcNow;
 
-        StopEtw(); // Ensure any running ETW session is completely closed and stopped
+        StopEtw();
 
         string sessionName = "PowerCoreEngine_DXGI_ETW";
-        int propBufferSize = 1024;
-        _pSessionProperties = Marshal.AllocHGlobal(propBufferSize);
+        int propSize = Marshal.SizeOf(typeof(EtwNative.EVENT_TRACE_PROPERTIES));
+        int totalBufferSize = propSize + (sessionName.Length + 1) * 2;
+        _pSessionProperties = Marshal.AllocHGlobal(totalBufferSize);
 
-        // Terminate any leftover trace session with same name
-        ResetTraceProperties(_pSessionProperties, propBufferSize);
+        FormatTraceProperties(_pSessionProperties, totalBufferSize, propSize, sessionName);
         EtwNative.ControlTraceW(0, sessionName, _pSessionProperties, EtwNative.EVENT_TRACE_CONTROL_STOP);
 
-        // Re-initialize clean properties before StartTraceW
-        ResetTraceProperties(_pSessionProperties, propBufferSize);
+        FormatTraceProperties(_pSessionProperties, totalBufferSize, propSize, sessionName);
         uint startRes = EtwNative.StartTraceW(out _etwSessionHandle, sessionName, _pSessionProperties);
         if (startRes != 0) {
-            ResetTraceProperties(_pSessionProperties, propBufferSize);
+            FormatTraceProperties(_pSessionProperties, totalBufferSize, propSize, sessionName);
             EtwNative.ControlTraceW(0, sessionName, _pSessionProperties, EtwNative.EVENT_TRACE_CONTROL_STOP);
-            ResetTraceProperties(_pSessionProperties, propBufferSize);
+            FormatTraceProperties(_pSessionProperties, totalBufferSize, propSize, sessionName);
             startRes = EtwNative.StartTraceW(out _etwSessionHandle, sessionName, _pSessionProperties);
             if (startRes != 0) {
                 _isEtwActive = false;
@@ -48,9 +51,8 @@ public partial class PowerCoreEngine : IDisposable {
             }
         }
 
-        // Enable Microsoft-Windows-DXGI ({CA11C036-0102-4A2D-A6AD-F03CFED5D3C9}) Event 42 (IDXGISwapChain::Present)
         Guid dxgiGuid = new Guid("CA11C036-0102-4A2D-A6AD-F03CFED5D3C9");
-        EtwNative.EnableTraceEx2(_etwSessionHandle, ref dxgiGuid, 1, 5, 0, 0, 0, IntPtr.Zero);
+        EtwNative.EnableTraceEx2(_etwSessionHandle, ref dxgiGuid, 1, 5, 0xC000000000000002, 0, 0, IntPtr.Zero);
 
         _etwCallbackDelegate = new EtwNative.EventRecordCallback(OnEtwEvent);
 
@@ -58,7 +60,7 @@ public partial class PowerCoreEngine : IDisposable {
         logfile.LoggerName = sessionName;
         logfile.ProcessTraceMode = EtwNative.PROCESS_TRACE_MODE_REAL_TIME | EtwNative.PROCESS_TRACE_MODE_EVENT_RECORD;
         logfile.EventRecordCallback = Marshal.GetFunctionPointerForDelegate(_etwCallbackDelegate);
-        logfile.CurrentEvent = new byte[96];
+        logfile.CurrentEvent = new byte[88];
         logfile.LogfileHeader = new byte[280];
 
         _pLogfile = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(EtwNative.EVENT_TRACE_LOGFILEW)));
@@ -88,7 +90,6 @@ public partial class PowerCoreEngine : IDisposable {
             if (pid <= 4) return;
 
             ushort eventId = (ushort)Marshal.ReadInt16(pRecord, 40);
-            // Event ID 42: DXGI SwapChain Present Start
             if (eventId == 42) {
                 DateTime now = DateTime.UtcNow;
                 lock (_syncLock) {
@@ -119,7 +120,11 @@ public partial class PowerCoreEngine : IDisposable {
 
         if (_pSessionProperties != IntPtr.Zero) {
             try {
-                EtwNative.ControlTraceW(_etwSessionHandle, "PowerCoreEngine_DXGI_ETW", _pSessionProperties, EtwNative.EVENT_TRACE_CONTROL_STOP);
+                string sessionName = "PowerCoreEngine_DXGI_ETW";
+                int propSize = Marshal.SizeOf(typeof(EtwNative.EVENT_TRACE_PROPERTIES));
+                int totalSize = propSize + (sessionName.Length + 1) * 2;
+                FormatTraceProperties(_pSessionProperties, totalSize, propSize, sessionName);
+                EtwNative.ControlTraceW(_etwSessionHandle, sessionName, _pSessionProperties, EtwNative.EVENT_TRACE_CONTROL_STOP);
             } catch { }
             _etwSessionHandle = 0;
         } else {
@@ -149,17 +154,13 @@ public partial class PowerCoreEngine : IDisposable {
 
     public static void ForceStopEtwSession() {
         try {
-            int propBufferSize = 1024;
-            IntPtr pProps = Marshal.AllocHGlobal(propBufferSize);
+            string sessionName = "PowerCoreEngine_DXGI_ETW";
+            int propSize = Marshal.SizeOf(typeof(EtwNative.EVENT_TRACE_PROPERTIES));
+            int totalSize = propSize + (sessionName.Length + 1) * 2;
+            IntPtr pProps = Marshal.AllocHGlobal(totalSize);
             try {
-                for (int i = 0; i < propBufferSize; i++) Marshal.WriteByte(pProps, i, 0);
-                EtwNative.EVENT_TRACE_PROPERTIES props = new EtwNative.EVENT_TRACE_PROPERTIES();
-                props.Wnode.BufferSize = (uint)propBufferSize;
-                props.Wnode.Flags = EtwNative.WNODE_FLAG_TRACED_GUID;
-                props.LogFileMode = EtwNative.EVENT_TRACE_REAL_TIME_MODE;
-                props.LoggerNameOffset = (uint)Marshal.SizeOf(typeof(EtwNative.EVENT_TRACE_PROPERTIES));
-                Marshal.StructureToPtr(props, pProps, false);
-                EtwNative.ControlTraceW(0, "PowerCoreEngine_DXGI_ETW", pProps, EtwNative.EVENT_TRACE_CONTROL_STOP);
+                FormatTraceProperties(pProps, totalSize, propSize, sessionName);
+                EtwNative.ControlTraceW(0, sessionName, pProps, EtwNative.EVENT_TRACE_CONTROL_STOP);
             } finally {
                 Marshal.FreeHGlobal(pProps);
             }

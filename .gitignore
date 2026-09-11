@@ -25,3 +25,7 @@ game_pcore_cap.txt
 
 # Graphify knowledge graph outputs
 graphify-out/
+
+# Installer build artifacts
+setup.inf
+setup.rpt

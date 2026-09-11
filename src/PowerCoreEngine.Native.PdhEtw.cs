@@ -116,7 +116,7 @@ public partial class PowerCoreEngine : IDisposable {
             public long CurrentTime;
             public uint BuffersRead;
             public uint ProcessTraceMode;
-            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 96)]
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 88)]
             public byte[] CurrentEvent;
             [MarshalAs(UnmanagedType.ByValArray, SizeConst = 280)]
             public byte[] LogfileHeader;

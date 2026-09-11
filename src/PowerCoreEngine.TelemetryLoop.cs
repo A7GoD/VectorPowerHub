@@ -127,6 +127,26 @@ public partial class PowerCoreEngine : IDisposable {
             }
         }
 
+        // Pass 3b: Permissive check for presenting game (custom directories, child processes, EA/Xbox titles)
+        if (detectedGamePid == 0) {
+            double highestFps = 0.0;
+            foreach (KeyValuePair<int, int> kvp in frameCountsThisCycle) {
+                int pid = kvp.Key;
+                double fps = kvp.Value / elapsed;
+                if (fps >= 10.0 && pid > 4 && pid != _currentHubPid && pid != _dwmPid) {
+                    string gameName;
+                    if (IsGameProcess(pid, true, out gameName)) {
+                        if (fps > highestFps) {
+                            highestFps = fps;
+                            detectedGamePid = pid;
+                            detectedGameName = gameName;
+                            detectedFps = fps;
+                        }
+                    }
+                }
+            }
+        }
+
         // Pass 4: Hardware Fallback (GPU Load > 30% and Power > 35W)
         // If ETW fails or game uses Vulkan/OpenGL or non-standard swapchain:
         if (detectedGamePid == 0) {
@@ -170,27 +190,5 @@ public partial class PowerCoreEngine : IDisposable {
         }
 
         EvaluateCycleEnforcement(elapsed, detectedGamePid, detectedGameName, detectedFps, frameCountsThisCycle, foregroundPid);
-    }
-
-    private double ResolveFallbackFps(Dictionary<int, int> frameCounts, double elapsed) {
-        if (_dwmPid <= 0) {
-            try {
-                Process[] procs = Process.GetProcessesByName("dwm");
-                if (procs.Length > 0) _dwmPid = procs[0].Id;
-            } catch { }
-        }
-        int dwmFrames = 0;
-        if (_dwmPid > 0 && frameCounts != null && elapsed > 0.001 && frameCounts.TryGetValue(_dwmPid, out dwmFrames) && dwmFrames > 0) {
-            double dwmFps = dwmFrames / elapsed;
-            if (dwmFps >= 5.0) return Math.Round(dwmFps, 1);
-        }
-
-        // Hardware Fallback: If 3D graphics workload is drawing high power, estimate real-time rendering rate
-        if (_currentSnapshot.GpuPowerW >= 35.0 && _currentSnapshot.GpuUtilPct >= 20) {
-            double targetHz = (_currentSnapshot.IsNvidiaDisplayAttached) ? 179.0 : 240.0;
-            double estFps = targetHz * (_currentSnapshot.GpuUtilPct / 100.0);
-            if (estFps >= 30.0) return Math.Round(estFps, 1);
-        }
-        return 0.0;
     }
 }
