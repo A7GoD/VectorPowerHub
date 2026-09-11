@@ -89,7 +89,7 @@ namespace VectorPowerHub {
                                 form.benchResultsGrid.AddOrUpdateResult(r3);
 
                                 BenchmarkResultInfo r4 = new BenchmarkResultInfo();
-                                r4.ProfileId = "guaranteed"; r4.ProfileName = "★ Guaranteed Curve (Mode 6 / EPP 25%)";
+                                r4.ProfileId = "guaranteed"; r4.ProfileName = "★ Efficient Guaranteed (Mode 6 / EPP 25%)";
                                 r4.CleanedAvgFps = 142.5; r4.RawAvgFps = 140.8;
                                 r4.CleanedOnePercentLow = 96.2; r4.RawOnePercentLow = 88.5;
                                 r4.AvgCpuPowerW = 48.0; r4.AvgGpuPowerW = 118.3; r4.AvgTotalPowerW = 166.3;

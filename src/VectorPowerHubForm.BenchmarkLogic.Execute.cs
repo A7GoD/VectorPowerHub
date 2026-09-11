@@ -12,7 +12,7 @@ namespace VectorPowerHub {
                 "⚡ Snappy-Pacing (Mode 4 / EPP 30%)",
                 "✦ Sweet-Spot Efficiency (4.9 GHz / 58W)",
                 "❄ Cold & Quiet (GPU 2100 MHz)",
-                "★ Guaranteed Curve (Mode 6 / EPP 25%)"
+                "★ Efficient Guaranteed (Mode 6 / EPP 25%)"
             };
 
             string originalProfile = currentSelectedProfile;

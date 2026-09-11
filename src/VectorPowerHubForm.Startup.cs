@@ -108,12 +108,12 @@ namespace VectorPowerHub {
                     : currentSelectedProfile.ToLowerInvariant();
 
                 if (isGameOn) {
-                    string gameName = (activeId == "clamped") ? "EFFICIENCY" : (activeId == "cold" ? "COLD & QUIET" : (activeId == "guaranteed" ? "GUARANTEED" : (activeId == "custom" ? "CUSTOM" : "SNAPPY")));
+                    string gameName = (activeId == "clamped") ? "EFFICIENCY" : (activeId == "cold" ? "COLD & QUIET" : (activeId == "guaranteed" ? "EFF GUARANTEED" : (activeId == "custom" ? "CUSTOM" : "SNAPPY")));
                     lblProfileBadge.Text = string.Format("LIVE: {0} (GAME ON)", gameName);
                     lblProfileBadge.ForeColor = ColorAccentGreen;
                     lblProfileBadge.BackColor = Color.FromArgb(12, 38, 24);
                 } else if (isAutoProfileSwitchingEnabled) {
-                    string standbyName = (activeId == "powersaver" || activeId == "silent") ? "SILENT ECO" : (activeId == "cold" ? "COLD" : (activeId == "guaranteed" ? "GUARANTEED" : (activeId == "custom" ? "CUSTOM" : "BALANCED")));
+                    string standbyName = (activeId == "powersaver" || activeId == "silent") ? "SILENT ECO" : (activeId == "cold" ? "COLD" : (activeId == "guaranteed" ? "EFF GUARANTEED" : (activeId == "custom" ? "CUSTOM" : "BALANCED")));
                     lblProfileBadge.Text = string.Format("LIVE: {0} (STANDBY)", standbyName);
                     lblProfileBadge.ForeColor = ColorAccentCyan;
                     lblProfileBadge.BackColor = Color.FromArgb(16, 28, 40);

@@ -32,7 +32,7 @@ namespace VectorPowerHub {
             trayMenuSnappy = new MenuItem("⚡ Snappy-Pacing (Competitive Max FPS)", (s, e) => SelectProfile("snappy"));
             trayMenuEfficiency = new MenuItem("✦ Sweet-Spot Efficiency (4.9 GHz / 58W)", (s, e) => SelectProfile("clamped"));
             trayMenuCold = new MenuItem("❄ Cold & Quiet (GPU 2100 MHz)", (s, e) => SelectProfile("cold"));
-            trayMenuGuaranteed = new MenuItem("★ Guaranteed Curve (Mode 6 / EPP 25%)", (s, e) => SelectProfile("guaranteed"));
+            trayMenuGuaranteed = new MenuItem("★ Efficient Guaranteed (Mode 6 / EPP 25%)", (s, e) => SelectProfile("guaranteed"));
 
             MenuItem mGameOn = new MenuItem("★ Game ON Target Profile");
             mGameOn.MenuItems.Add(trayMenuSnappy);
@@ -44,7 +44,7 @@ namespace VectorPowerHub {
             trayMenuDesktopBalanced = new MenuItem("☆ Balanced Standby (50% EPP, Boost Mode 3, D3cold)", (s, e) => SelectDesktopProfile("desktop"));
             trayMenuDesktopSilent = new MenuItem("☾ Silent Power Saver (80% EPP, No Boost, D3cold)", (s, e) => SelectDesktopProfile("powersaver"));
             trayMenuDesktopCold = new MenuItem("❄ Cold & Quiet (GPU Clamped 2100 MHz)", (s, e) => SelectDesktopProfile("cold"));
-            trayMenuDesktopGuaranteed = new MenuItem("★ Guaranteed Curve (EPP 25%, Boost Mode 6)", (s, e) => SelectDesktopProfile("guaranteed"));
+            trayMenuDesktopGuaranteed = new MenuItem("★ Efficient Guaranteed (EPP 25%, Boost Mode 6)", (s, e) => SelectDesktopProfile("guaranteed"));
 
             MenuItem mGameOff = new MenuItem("☆ Game OFF Standby Profile");
             mGameOff.MenuItems.Add(trayMenuDesktopBalanced);

@@ -123,7 +123,7 @@ namespace VectorPowerHub {
                 "3 - Efficient Enabled",
                 "4 - Efficient Aggressive (Snappy Default)",
                 "5 - Aggressive At Guaranteed",
-                "6 - Efficient Aggressive At Guaranteed"
+                "6 - Efficient Guaranteed (Aggressive At Guaranteed)"
             });
             comboBoostMode.SelectedIndex = 4;
             comboBoostMode.Location = new Point(460, 182);

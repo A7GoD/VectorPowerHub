@@ -77,16 +77,16 @@ namespace VectorPowerHub {
             cardProfileCold.ProfileClicked += (s, e) => SelectProfile("cold");
 
             cardProfileGuaranteed = new ProfileCard(
-                "★ Guaranteed Curve",
+                "★ Efficient Guaranteed",
                 "MODE 6 AT GUARANTEED (PEAK IPC)",
                 ColorAccentPurple,
                 new string[] {
-                    "• Boost Mode 6 (Eff. Aggressive)",
-                    "• Guaranteed Base Curve Anchor",
+                    "• Boost Mode 6 (Efficient Guaranteed)",
+                    "• Unbounded Freq (5.5 GHz Peak)",
                     "• EPP 25% (Ultra-Responsive Bias)",
                     "• Full 140W RTX 5070 Headroom",
                     "• Sustained peak IPC headroom",
-                    "• Benchmark validated curve"
+                    "• Benchmark validated profile"
                 },
                 "APPLY PROFILE",
                 false
