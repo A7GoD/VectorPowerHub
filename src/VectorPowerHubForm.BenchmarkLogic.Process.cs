@@ -47,12 +47,13 @@ namespace VectorPowerHub {
 
         private void FinishBenchmarkRun(string originalProfile, List<BenchmarkResultInfo> results) {
             // Cleanup & Restore
+            bridge.SetBenchmarking(false);
             ApplyBenchmarkProfile(originalProfile);
             RunCmd("nvidia-smi -rgc");
 
-            // Determine Winner
+            // Determine Winner (must have > 0.0 FPS)
             BenchmarkResultInfo winner = null;
-            double maxScore = -1.0;
+            double maxScore = 0.0;
             foreach (BenchmarkResultInfo res in results) {
                 if (res.CleanedAvgFps > maxScore) {
                     maxScore = res.CleanedAvgFps;
@@ -73,21 +74,29 @@ namespace VectorPowerHub {
                 btnStopBenchmark.TextColor = ColorTextDim;
                 benchProgressBar.Value = 100;
 
-                if (!cancelBenchmarkRequested && winner != null) {
-                    lblBenchStatus.Text = string.Format("✔ Benchmark Complete! Optimal Gaming Profile: {0} ({1:0.0} Cleaned FPS)", winner.ProfileName, winner.CleanedAvgFps);
-                    btnApplyWinningProfile.Visible = true;
-                    btnApplyWinningProfile.Text = string.Format("★ Apply Winner: {0}", winner.ProfileId.ToUpper());
-                    lblOutlierAlertPill.Text = string.Format("★ WINNER: {0} • {1:0.0} FPS (1% LOW: {2:0.0})", winner.ProfileName, winner.CleanedAvgFps, winner.CleanedOnePercentLow);
-                    lblOutlierAlertPill.ForeColor = ColorAccentGold;
-                    lblOutlierAlertPill.BackColor = Color.FromArgb(40, 30, 12);
-                    ShowNotificationBalloon("Benchmark Complete", string.Format("Winning Profile: {0}\nCleaned FPS: {1:0.0} (1% Low: {2:0.0})\nEfficiency: {3:0.00} FPS/W", winner.ProfileName, winner.CleanedAvgFps, winner.CleanedOnePercentLow, winner.EfficiencyScore));
+                if (!cancelBenchmarkRequested) {
+                    if (winner != null) {
+                        lblBenchStatus.Text = string.Format("✔ Benchmark Complete! Optimal Gaming Profile: {0} ({1:0.0} Cleaned FPS)", winner.ProfileName, winner.CleanedAvgFps);
+                        btnApplyWinningProfile.Visible = true;
+                        btnApplyWinningProfile.Text = string.Format("★ Apply Winner: {0}", winner.ProfileId.ToUpper());
+                        lblOutlierAlertPill.Text = string.Format("★ WINNER: {0} • {1:0.0} FPS (1% LOW: {2:0.0})", winner.ProfileName, winner.CleanedAvgFps, winner.CleanedOnePercentLow);
+                        lblOutlierAlertPill.ForeColor = ColorAccentGold;
+                        lblOutlierAlertPill.BackColor = Color.FromArgb(40, 30, 12);
+                        ShowNotificationBalloon("Benchmark Complete", string.Format("Winning Profile: {0}\nCleaned FPS: {1:0.0} (1% Low: {2:0.0})\nEfficiency: {3:0.00} FPS/W", winner.ProfileName, winner.CleanedAvgFps, winner.CleanedOnePercentLow, winner.EfficiencyScore));
+                    } else {
+                        lblBenchStatus.Text = "⚠️ Benchmark Complete: 0.0 FPS captured (ETW SwapChain idle / Anti-Cheat active). Check game presentation mode.";
+                        btnApplyWinningProfile.Visible = false;
+                        lblOutlierAlertPill.Text = "⚠️ ETW SWAPCHAIN IDLE • NO FRAMES CAPTURED (ANTI-CHEAT / VULKAN ACTIVE)";
+                        lblOutlierAlertPill.ForeColor = ColorAccentGold;
+                        lblOutlierAlertPill.BackColor = Color.FromArgb(40, 30, 12);
+                    }
                 } else {
                     lblBenchStatus.Text = "Benchmark Cancelled. Restored initial profile.";
+                    btnApplyWinningProfile.Visible = false;
                 }
 
                 benchResultsGrid.Refresh();
             }));
-
         }
 
         private void ApplyBenchmarkProfile(string profileId) {

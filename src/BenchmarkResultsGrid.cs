@@ -1,15 +1,9 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Text;
-using System.IO;
-using System.Reflection;
-using System.Runtime.InteropServices;
-using System.Threading;
 using System.Windows.Forms;
-using Microsoft.Win32;
 
 namespace VectorPowerHub {
     public class BenchmarkResultsGrid : Control {
@@ -66,17 +60,18 @@ namespace VectorPowerHub {
                 g.DrawLine(p, 1, 27, w - 2, 27);
             }
 
-            // Proportional column coordinates
+            // Proportional column coordinates with safe clearances
             int colRank = 12;
-            int colName = 65;
-            int colCleanFps = (int)(w * 0.28);
-            int colRawFps = (int)(w * 0.39);
-            int colCleanLow = (int)(w * 0.49);
-            int colRawLow = (int)(w * 0.59);
-            int colCpuW = (int)(w * 0.69);
-            int colGpuW = (int)(w * 0.77);
-            int colOutliers = (int)(w * 0.84);
-            int colEff = (int)(w * 0.92);
+            int colName = 60;
+            int colCleanFps = Math.Max(380, (int)(w * 0.35));
+            int rem = w - colCleanFps;
+            int colRawFps = colCleanFps + (int)(rem * 0.150);
+            int colCleanLow = colCleanFps + (int)(rem * 0.280);
+            int colRawLow = colCleanFps + (int)(rem * 0.410);
+            int colCpuW = colCleanFps + (int)(rem * 0.535);
+            int colGpuW = colCleanFps + (int)(rem * 0.640);
+            int colOutliers = colCleanFps + (int)(rem * 0.745);
+            int colEff = colCleanFps + (int)(rem * 0.865);
 
             string[] headers = new string[] { "RANK", "PROFILE NAME", "CLEAN AVG", "RAW AVG", "CLEAN 1%", "RAW 1%", "CPU W", "GPU W", "OUTLIERS", "EFFICIENCY" };
             int[] colPositions = new int[] { colRank, colName, colCleanFps, colRawFps, colCleanLow, colRawLow, colCpuW, colGpuW, colOutliers, colEff };
@@ -134,24 +129,31 @@ namespace VectorPowerHub {
                         g.DrawString(r.ProfileName, fBold, b, colName, rowY);
                     }
 
+                    bool hasFps = r.CleanedAvgFps > 0.0;
+                    bool hasRawFps = r.RawAvgFps > 0.0;
+
                     // Cleaned Avg FPS (Consolas Bold)
-                    using (Brush b = new SolidBrush(VectorPowerHubForm.ColorAccentCyan)) {
-                        g.DrawString(string.Format("{0:0.0} FPS", r.CleanedAvgFps), fBoldDigits, b, colCleanFps, rowY);
+                    using (Brush b = new SolidBrush(hasFps ? VectorPowerHubForm.ColorAccentCyan : VectorPowerHubForm.ColorTextDim)) {
+                        string cleanFpsStr = hasFps ? string.Format("{0:0.0} FPS", r.CleanedAvgFps) : "N/A (Idle)";
+                        g.DrawString(cleanFpsStr, fBoldDigits, b, colCleanFps, rowY);
                     }
 
                     // Raw Avg FPS (Consolas Regular)
                     using (Brush b = new SolidBrush(VectorPowerHubForm.ColorTextMuted)) {
-                        g.DrawString(string.Format("{0:0.0} FPS", r.RawAvgFps), fDigits, b, colRawFps, rowY);
+                        string rawFpsStr = hasRawFps ? string.Format("{0:0.0} FPS", r.RawAvgFps) : "N/A";
+                        g.DrawString(rawFpsStr, fDigits, b, colRawFps, rowY);
                     }
 
                     // Cleaned 1% Lows (Consolas Bold)
-                    using (Brush b = new SolidBrush(VectorPowerHubForm.ColorAccentGold)) {
-                        g.DrawString(string.Format("{0:0.0} FPS", r.CleanedOnePercentLow), fBoldDigits, b, colCleanLow, rowY);
+                    using (Brush b = new SolidBrush(hasFps ? VectorPowerHubForm.ColorAccentGold : VectorPowerHubForm.ColorTextDim)) {
+                        string cleanLowStr = hasFps ? string.Format("{0:0.0} FPS", r.CleanedOnePercentLow) : "N/A";
+                        g.DrawString(cleanLowStr, fBoldDigits, b, colCleanLow, rowY);
                     }
 
                     // Raw 1% Lows (Consolas Regular)
                     using (Brush b = new SolidBrush(VectorPowerHubForm.ColorTextMuted)) {
-                        g.DrawString(string.Format("{0:0.0} FPS", r.RawOnePercentLow), fDigits, b, colRawLow, rowY);
+                        string rawLowStr = hasRawFps ? string.Format("{0:0.0} FPS", r.RawOnePercentLow) : "N/A";
+                        g.DrawString(rawLowStr, fDigits, b, colRawLow, rowY);
                     }
 
                     // CPU Watts
@@ -172,8 +174,9 @@ namespace VectorPowerHub {
                     }
 
                     // Efficiency Score
-                    using (Brush b = new SolidBrush(VectorPowerHubForm.ColorAccentPurple)) {
-                        g.DrawString(string.Format("{0:0.00} FPS/W", r.EfficiencyScore), fDigits, b, colEff, rowY);
+                    using (Brush b = new SolidBrush(hasFps ? VectorPowerHubForm.ColorAccentPurple : VectorPowerHubForm.ColorTextDim)) {
+                        string effStr = hasFps ? string.Format("{0:0.00} FPS/W", r.EfficiencyScore) : "N/A";
+                        g.DrawString(effStr, fDigits, b, colEff, rowY);
                     }
 
                     rowY += rowHeight;
@@ -181,9 +184,4 @@ namespace VectorPowerHub {
             }
         }
     }
-
-    // =========================================================================================
-    // PER-CORE TOPOLOGY CONTROL (24 Physical Cores: 8 Lion Cove P-Cores + 16 Skymont E-Cores)
-    // =========================================================================================
-
-}
+}

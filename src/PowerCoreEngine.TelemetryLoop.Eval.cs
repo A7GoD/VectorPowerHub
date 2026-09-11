@@ -63,10 +63,22 @@ public partial class PowerCoreEngine : IDisposable {
             }
         } else {
             // Benchmarking active: Track FPS of active game if present
+            if (detectedGamePid > 0 && _currentGamePid <= 0) {
+                _currentGamePid = detectedGamePid;
+                _currentGameName = detectedGameName;
+            }
             if (_currentGamePid > 0) {
                 int activeFrames = 0;
                 frameCountsThisCycle.TryGetValue(_currentGamePid, out activeFrames);
-                _currentFps = activeFrames / elapsed;
+                if (activeFrames > 0) {
+                    _currentFps = activeFrames / elapsed;
+                } else if (detectedFps > 0.0) {
+                    _currentFps = detectedFps;
+                } else {
+                    _currentFps = ResolveFallbackFps(frameCountsThisCycle, elapsed);
+                }
+            } else {
+                _currentFps = (detectedFps > 0.0) ? detectedFps : ResolveFallbackFps(frameCountsThisCycle, elapsed);
             }
         }
 
@@ -110,7 +122,9 @@ public partial class PowerCoreEngine : IDisposable {
         if (_isGameMode || _isBenchmarking) {
             // 3D Game or Benchmark is actively rendering on discrete GPU
             ReadGpuTelemetrySafe(out gpuWatts, out gpuClockMhz, out gpuTempC, out gpuUtilPct, out gpuStatus);
-            if (isDisplayAttached) {
+            if (_currentFps <= 0.0 && gpuWatts >= 30.0) {
+                gpuStatus = string.Format("3D Active ({0:F1}W) • ETW Idle (Vulkan/Anti-Cheat)", gpuWatts);
+            } else if (isDisplayAttached) {
                 gpuStatus = string.Format("3D Active ({0:F1}W) • Driving {1}", gpuWatts, monitorName);
             } else {
                 gpuStatus = string.Format("3D Active ({0:F1}W Dynamic Boost)", gpuWatts);

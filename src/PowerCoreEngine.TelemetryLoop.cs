@@ -152,7 +152,7 @@ public partial class PowerCoreEngine : IDisposable {
                     if (IsGameProcess(foregroundPid, true, out fgName)) {
                         detectedGamePid = foregroundPid;
                         detectedGameName = fgName;
-                        detectedFps = 0.0;
+                        detectedFps = ResolveFallbackFps(frameCountsThisCycle, elapsed);
                     }
                 }
 
@@ -163,12 +163,27 @@ public partial class PowerCoreEngine : IDisposable {
                     if (candidatePid > 0) {
                         detectedGamePid = candidatePid;
                         detectedGameName = candidateName;
-                        detectedFps = 0.0;
+                        detectedFps = ResolveFallbackFps(frameCountsThisCycle, elapsed);
                     }
                 }
             }
         }
 
         EvaluateCycleEnforcement(elapsed, detectedGamePid, detectedGameName, detectedFps, frameCountsThisCycle, foregroundPid);
+    }
+
+    private double ResolveFallbackFps(Dictionary<int, int> frameCounts, double elapsed) {
+        if (_dwmPid <= 0) {
+            try {
+                Process[] procs = Process.GetProcessesByName("dwm");
+                if (procs.Length > 0) _dwmPid = procs[0].Id;
+            } catch { }
+        }
+        int dwmFrames = 0;
+        if (_dwmPid > 0 && frameCounts != null && elapsed > 0.001 && frameCounts.TryGetValue(_dwmPid, out dwmFrames) && dwmFrames > 0) {
+            double dwmFps = dwmFrames / elapsed;
+            if (dwmFps >= 5.0) return Math.Round(dwmFps, 1);
+        }
+        return 0.0;
     }
 }

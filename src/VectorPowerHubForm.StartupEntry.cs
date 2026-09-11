@@ -54,6 +54,31 @@ namespace VectorPowerHub {
                             Application.DoEvents();
                             Thread.Sleep(2200);
                             form.OnTelemetryTick(null, EventArgs.Empty);
+                            if (t == 1 && form.benchResultsGrid != null) {
+                                BenchmarkResultInfo r1 = new BenchmarkResultInfo();
+                                r1.ProfileId = "snappy"; r1.ProfileName = "⚡ Snappy-Pacing (Mode 4 / EPP 30%)";
+                                r1.CleanedAvgFps = 144.2; r1.RawAvgFps = 141.8;
+                                r1.CleanedOnePercentLow = 98.5; r1.RawOnePercentLow = 84.1;
+                                r1.AvgCpuPowerW = 46.2; r1.AvgGpuPowerW = 118.5; r1.AvgTotalPowerW = 164.7;
+                                r1.EfficiencyScore = 144.2 / 164.7; r1.IsWinner = true;
+                                form.benchResultsGrid.AddOrUpdateResult(r1);
+
+                                BenchmarkResultInfo r2 = new BenchmarkResultInfo();
+                                r2.ProfileId = "clamped"; r2.ProfileName = "✦ Sweet-Spot Efficiency (4.9 GHz / 58W)";
+                                r2.CleanedAvgFps = 138.6; r2.RawAvgFps = 137.0;
+                                r2.CleanedOnePercentLow = 95.2; r2.RawOnePercentLow = 91.0;
+                                r2.AvgCpuPowerW = 38.4; r2.AvgGpuPowerW = 118.1; r2.AvgTotalPowerW = 156.5;
+                                r2.OutliersFilteredCount = 1; r2.OutlierDetails = "Freeze";
+                                r2.EfficiencyScore = 138.6 / 156.5;
+                                form.benchResultsGrid.AddOrUpdateResult(r2);
+
+                                BenchmarkResultInfo r3 = new BenchmarkResultInfo();
+                                r3.ProfileId = "cold"; r3.ProfileName = "❄ Cold & Quiet (GPU 2100 MHz)";
+                                r3.CleanedAvgFps = 0.0; r3.RawAvgFps = 0.0;
+                                r3.CleanedOnePercentLow = 0.0; r3.RawOnePercentLow = 0.0;
+                                r3.AvgCpuPowerW = 28.5; r3.AvgGpuPowerW = 85.2; r3.AvgTotalPowerW = 113.7;
+                                form.benchResultsGrid.AddOrUpdateResult(r3);
+                            }
                             Application.DoEvents();
 
                             Bitmap bmp = new Bitmap(form.Width, form.Height);

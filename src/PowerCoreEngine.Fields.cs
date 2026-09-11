@@ -39,6 +39,7 @@ public partial class PowerCoreEngine : IDisposable {
     private Thread _etwThread;
     private DateTime _lastEtwAttempt = DateTime.MinValue;
     private int _currentHubPid;
+    private int _dwmPid;
     private const ulong INVALID_PROCESSTRACE_HANDLE = 0xFFFFFFFFFFFFFFFF;
 
     // Frame & Presentation Tracking

@@ -44,6 +44,14 @@ namespace VectorPowerHub {
             SetDesktopProfile(profileId);
         }
 
+        public void SetBenchmarking(bool benchmarking) {
+            if (isEngineLoaded && setBenchmarkingMethod != null && engineInstance != null) {
+                try {
+                    setBenchmarkingMethod.Invoke(engineInstance, new object[] { benchmarking });
+                } catch { }
+            }
+        }
+
         private void ExecuteFallbackProfile(string profileId) {
             if (profileId == "snappy") {
                 ApplyPowerCfgValues(0, 0, 4, 30);

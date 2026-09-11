@@ -124,6 +124,11 @@ public partial class PowerCoreEngine : IDisposable {
     private volatile bool _isBenchmarking;
     public bool IsBenchmarking {
         get { return _isBenchmarking; }
+        set { _isBenchmarking = value; }
+    }
+
+    public void SetBenchmarking(bool benchmarking) {
+        _isBenchmarking = benchmarking;
     }
 
     private volatile bool _benchmarkCancelRequested;
