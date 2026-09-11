@@ -8,7 +8,7 @@ using System.Threading;
 using Microsoft.Win32;
 
 public partial class PowerCoreEngine : IDisposable {
-        private void EvaluateCycleEnforcement(double elapsed, int detectedGamePid, string detectedGameName, double detectedFps, Dictionary<int, int> frameCountsThisCycle, int foregroundPid) {
+        private void EvaluateCycleEnforcement(double elapsed, int detectedGamePid, string detectedGameName, double detectedFps, Dictionary<int, double> cycleFpsMap, int foregroundPid) {
             DateTime now = DateTime.UtcNow;
         // 3. State Machine Transition & Profile Enforcement
         if (!_isBenchmarking) {
@@ -68,17 +68,16 @@ public partial class PowerCoreEngine : IDisposable {
                 _currentGameName = detectedGameName;
             }
             if (_currentGamePid > 0) {
-                int activeFrames = 0;
-                frameCountsThisCycle.TryGetValue(_currentGamePid, out activeFrames);
-                if (activeFrames > 0) {
-                    _currentFps = activeFrames / elapsed;
+                double actFps = 0.0;
+                if (cycleFpsMap != null && cycleFpsMap.TryGetValue(_currentGamePid, out actFps) && actFps > 0.0) {
+                    _currentFps = actFps;
                 } else if (detectedFps > 0.0) {
                     _currentFps = detectedFps;
                 } else {
-                    _currentFps = ResolveFallbackFps(frameCountsThisCycle, elapsed);
+                    _currentFps = ResolveFallbackFps(cycleFpsMap);
                 }
             } else {
-                _currentFps = (detectedFps > 0.0) ? detectedFps : ResolveFallbackFps(frameCountsThisCycle, elapsed);
+                _currentFps = (detectedFps > 0.0) ? detectedFps : ResolveFallbackFps(cycleFpsMap);
             }
         }
 

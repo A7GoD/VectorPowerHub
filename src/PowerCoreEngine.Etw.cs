@@ -91,6 +91,7 @@ public partial class PowerCoreEngine : IDisposable {
 
             ushort eventId = (ushort)Marshal.ReadInt16(pRecord, 40);
             if (eventId == 42) {
+                long ts = Marshal.ReadInt64(pRecord, 16);
                 DateTime now = DateTime.UtcNow;
                 lock (_syncLock) {
                     _lastPresentMap[pid] = now;
@@ -99,7 +100,9 @@ public partial class PowerCoreEngine : IDisposable {
                         _frameCounterMap[pid] = count + 1;
                     } else {
                         _frameCounterMap[pid] = 1;
+                        _firstPresentTsMap[pid] = ts;
                     }
+                    _lastPresentTsMap[pid] = ts;
 
                     if (pid == _currentGamePid) {
                         _currentGameFramesThisSecond++;

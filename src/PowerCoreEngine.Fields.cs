@@ -45,6 +45,10 @@ public partial class PowerCoreEngine : IDisposable {
     // Frame & Presentation Tracking
     private readonly Dictionary<int, DateTime> _lastPresentMap = new Dictionary<int, DateTime>();
     private readonly Dictionary<int, int> _frameCounterMap = new Dictionary<int, int>();
+    private readonly Dictionary<int, long> _firstPresentTsMap = new Dictionary<int, long>();
+    private readonly Dictionary<int, long> _lastPresentTsMap = new Dictionary<int, long>();
+    private readonly Dictionary<int, long> _prevFlushTsMap = new Dictionary<int, long>();
+    private readonly Dictionary<int, double> _pidFpsMap = new Dictionary<int, double>();
     private int _currentGameFramesThisSecond;
     private DateTime _lastFpsCalcTime;
     private double _currentFps;
