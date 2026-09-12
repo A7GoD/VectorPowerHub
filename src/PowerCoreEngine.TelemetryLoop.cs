@@ -147,8 +147,10 @@ public partial class PowerCoreEngine : IDisposable {
             }
         }
 
-        // Pass 4: Hardware Fallback (GPU Load >= 30% and Power >= 35W)
-        if (detectedGamePid == 0) {
+        // Pass 4: Hardware Fallback (GPU Load >= 30% and Power >= 35W) - D3cold Safe
+        string monNameCheck = "";
+        bool dispAttached = CheckNvidiaDisplayAttached(out monNameCheck);
+        if (detectedGamePid == 0 && (_isNvmlInitialized || _isGameMode || _isBenchmarking || dispAttached)) {
             double fbWatts; int fbClock, fbTemp, fbUtil; string fbStatus;
             ReadGpuTelemetrySafe(out fbWatts, out fbClock, out fbTemp, out fbUtil, out fbStatus);
             if (fbUtil >= 30 && fbWatts >= 35.0) {

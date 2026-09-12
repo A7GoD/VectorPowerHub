@@ -50,8 +50,8 @@ public partial class PowerCoreEngine : IDisposable {
 
                             if (_autoProfileSwitching) {
                                 ApplyProfileInternal(_selectedDesktopProfile);
-                                ShutdownNvml();
                             }
+                            ShutdownNvml();
                         }
                     }
                 } else {
@@ -59,6 +59,7 @@ public partial class PowerCoreEngine : IDisposable {
                     _currentGamePid = 0;
                     _currentGameName = "";
                     _gameModeExitTimer = 0.0;
+                    ShutdownNvml();
                 }
             }
         } else {
