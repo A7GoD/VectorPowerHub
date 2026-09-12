@@ -60,10 +60,12 @@ namespace VectorPowerHub {
             telemetryTimer = new System.Windows.Forms.Timer();
             telemetryTimer.Interval = 750;
             telemetryTimer.Tick += OnTelemetryTick;
-            telemetryTimer.Start();
-
-            // Initial telemetry sample
-            OnTelemetryTick(null, EventArgs.Empty);
+            if (!startMinimized) {
+                telemetryTimer.Start();
+                OnTelemetryTick(null, EventArgs.Empty);
+            } else {
+                if (bridge != null) bridge.SetTrayMinimized(true);
+            }
 
             // Initial responsive layout pass
             PerformResponsiveLayout();
@@ -118,6 +120,22 @@ namespace VectorPowerHub {
             base.WndProc(ref m);
         }
 
+        protected override void OnResize(EventArgs e) {
+            base.OnResize(e);
+            if (this.WindowState == FormWindowState.Minimized) {
+                try { if (telemetryTimer != null && telemetryTimer.Enabled) telemetryTimer.Stop(); } catch { }
+                if (bridge != null) bridge.SetTrayMinimized(true);
+            } else if (this.Visible) {
+                if (bridge != null) bridge.SetTrayMinimized(false);
+                try {
+                    if (telemetryTimer != null && !telemetryTimer.Enabled) {
+                        telemetryTimer.Start();
+                        OnTelemetryTick(null, EventArgs.Empty);
+                    }
+                } catch { }
+            }
+        }
+
         protected override void SetVisibleCore(bool value) {
             if (startMinimizedToTray && !hasShownOnce) {
                 value = false;
@@ -130,7 +148,9 @@ namespace VectorPowerHub {
             base.OnShown(e);
             if (startMinimizedToTray) {
                 this.Hide();
-                ShowNotificationBalloon("Vector Power Hub Active", "Started with Windows in system tray. Hardware auto-profiles engaged.");
+                try { if (telemetryTimer != null && telemetryTimer.Enabled) telemetryTimer.Stop(); } catch { }
+                if (bridge != null) bridge.SetTrayMinimized(true);
+                ShowNotificationBalloon("Vector Power Hub Active", "Started with Windows in system tray. Low-power tray idle mode engaged.");
             }
         }
 

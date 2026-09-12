@@ -114,6 +114,22 @@ public partial class PowerCoreEngine : IDisposable {
         AutoProfileSwitching = enabled;
     }
 
+    public bool IsTrayMinimized {
+        get { return _isTrayMinimized; }
+        set { SetTrayMinimized(value); }
+    }
+
+    public void SetTrayMinimized(bool minimized) {
+        _isTrayMinimized = minimized;
+        if (!minimized) {
+            WakeLoop();
+        }
+    }
+
+    public void WakeLoop() {
+        try { _wakeLoopEvent.Set(); } catch { }
+    }
+
     private volatile bool _isRunning;
     public bool IsRunning {
         get { return _isRunning; }

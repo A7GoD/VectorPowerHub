@@ -18,8 +18,9 @@ public partial class PowerCoreEngine : IDisposable {
                 }
             } catch { }
 
-            // Sleep precisely 500ms, or wake immediately on stop
-            if (_stopEvent.WaitOne(500)) {
+            int cadence = (_isGameMode || _isBenchmarking) ? 500 : (_isTrayMinimized ? 2000 : 750);
+            int sign = WaitHandle.WaitAny(new WaitHandle[] { _stopEvent, _wakeLoopEvent }, cadence);
+            if (sign == 0) {
                 break;
             }
         }

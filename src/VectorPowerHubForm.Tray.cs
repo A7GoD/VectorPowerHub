@@ -91,31 +91,11 @@ namespace VectorPowerHub {
             trayIcon.DoubleClick += (s, e) => RestoreFromTray();
         }
 
-        private Icon GenerateAppIcon() {
-            Bitmap bmp = new Bitmap(32, 32);
-            using (Graphics g = Graphics.FromImage(bmp)) {
-                g.SmoothingMode = SmoothingMode.AntiAlias;
-                g.Clear(Color.Transparent);
-                using (Brush b = new SolidBrush(ColorBgMain)) {
-                    g.FillEllipse(b, 1, 1, 30, 30);
-                }
-                using (Pen p = new Pen(ColorAccentCyan, 2f)) {
-                    g.DrawEllipse(p, 1, 1, 30, 30);
-                }
-                PointF[] bolt = new PointF[] {
-                    new PointF(18, 5), new PointF(10, 16), new PointF(16, 16),
-                    new PointF(13, 27), new PointF(23, 14), new PointF(17, 14)
-                };
-                using (Brush boltBrush = new SolidBrush(ColorAccentCyan)) {
-                    g.FillPolygon(boltBrush, bolt);
-                }
-            }
-            return Icon.FromHandle(bmp.GetHicon());
-        }
-
         private void MinimizeToTray() {
             this.Hide();
-            ShowNotificationBalloon("Vector Power Hub Running", "Minimized to system tray. Telemetry and active profile remain fully engaged.");
+            try { if (telemetryTimer != null && telemetryTimer.Enabled) telemetryTimer.Stop(); } catch { }
+            if (bridge != null) bridge.SetTrayMinimized(true);
+            ShowNotificationBalloon("Vector Power Hub Running", "Minimized to system tray. Low-power tray idle mode engaged.");
         }
 
         public void RestoreFromTray() {
@@ -128,6 +108,13 @@ namespace VectorPowerHub {
             this.ShowInTaskbar = true;
             this.Show();
             this.WindowState = FormWindowState.Normal;
+            if (bridge != null) bridge.SetTrayMinimized(false);
+            try {
+                if (telemetryTimer != null && !telemetryTimer.Enabled) {
+                    telemetryTimer.Start();
+                }
+            } catch { }
+            OnTelemetryTick(null, EventArgs.Empty);
             this.BringToFront();
             this.Activate();
             try { SetForegroundWindow(this.Handle); } catch { }
@@ -160,22 +147,13 @@ namespace VectorPowerHub {
             base.OnFormClosing(e);
         }
 
-        private void ShowNotificationBalloon(string title, string text) {
-            try {
-                trayIcon.BalloonTipTitle = title;
-                trayIcon.BalloonTipText = text;
-                trayIcon.BalloonTipIcon = ToolTipIcon.Info;
-                trayIcon.ShowBalloonTip(2000);
-            } catch { }
-        }
-
         private void ExitApplication() {
             isDisposingOrClosed = true;
             if (singleInstanceWakeEvent != null) {
                 try { singleInstanceWakeEvent.Set(); singleInstanceWakeEvent.Close(); } catch { }
                 singleInstanceWakeEvent = null;
             }
-            telemetryTimer.Stop();
+            if (telemetryTimer != null) telemetryTimer.Stop();
             if (trayIcon != null) {
                 trayIcon.Visible = false;
                 trayIcon.Dispose();

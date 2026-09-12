@@ -52,6 +52,14 @@ namespace VectorPowerHub {
             }
         }
 
+        public void SetTrayMinimized(bool minimized) {
+            if (isEngineLoaded && setTrayMinimizedMethod != null && engineInstance != null) {
+                try {
+                    setTrayMinimizedMethod.Invoke(engineInstance, new object[] { minimized });
+                } catch { }
+            }
+        }
+
         private void ExecuteFallbackProfile(string profileId) {
             if (profileId == "snappy") {
                 ApplyPowerCfgValues(0, 0, 4, 30);

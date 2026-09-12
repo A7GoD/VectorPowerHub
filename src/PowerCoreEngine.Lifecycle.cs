@@ -69,7 +69,8 @@ public partial class PowerCoreEngine : IDisposable {
         } catch { }
 
         Stop();
-        _stopEvent.Close();
+        try { _stopEvent.Close(); } catch { }
+        try { _wakeLoopEvent.Close(); } catch { }
     }
 
     // ---------------------------------------------------------------------------------------------

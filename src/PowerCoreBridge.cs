@@ -20,6 +20,7 @@ namespace VectorPowerHub {
         private MethodInfo setGamingProfileMethod = null;
         private MethodInfo setDesktopProfileMethod = null;
         private MethodInfo setBenchmarkingMethod = null;
+        private MethodInfo setTrayMinimizedMethod = null;
         private PropertyInfo currentSnapshotProp = null;
         private bool isEngineLoaded = false;
 
@@ -85,6 +86,7 @@ namespace VectorPowerHub {
                     setGamingProfileMethod = engineType.GetMethod("SetGamingProfile");
                     setDesktopProfileMethod = engineType.GetMethod("SetDesktopProfile") ?? engineType.GetMethod("SetSelectedDesktopProfile");
                     setBenchmarkingMethod = engineType.GetMethod("SetBenchmarking");
+                    setTrayMinimizedMethod = engineType.GetMethod("SetTrayMinimized");
                     currentSnapshotProp = engineType.GetProperty("CurrentSnapshot");
 
                     MethodInfo startMethod = engineType.GetMethod("Start");

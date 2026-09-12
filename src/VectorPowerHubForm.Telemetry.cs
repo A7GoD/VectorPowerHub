@@ -18,6 +18,13 @@ namespace VectorPowerHub {
         // -----------------------------------------------------------------------------------------
         public void OnTelemetryTick(object sender, EventArgs e) {
             try {
+                if (sender != null && (!this.Visible || this.WindowState == FormWindowState.Minimized)) {
+                    if (telemetryTimer != null && telemetryTimer.Enabled) {
+                        telemetryTimer.Stop();
+                    }
+                    return;
+                }
+
                 HubTelemetrySnapshot snap = bridge.GetSnapshot();
                 currentSnapshot = snap;
 

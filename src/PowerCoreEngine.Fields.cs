@@ -12,9 +12,11 @@ public partial class PowerCoreEngine : IDisposable {
     // ---------------------------------------------------------------------------------------------
     private readonly object _syncLock = new object();
     private readonly ManualResetEvent _stopEvent = new ManualResetEvent(false);
+    private readonly AutoResetEvent _wakeLoopEvent = new AutoResetEvent(false);
     private Thread _workerThread;
 
     private volatile bool _isGameMode;
+    private volatile bool _isTrayMinimized;
     private int _currentGamePid;
     private string _currentGameName;
 
