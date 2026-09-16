@@ -18,15 +18,19 @@ jobs:
     - name: Setup MSBuild paths
       uses: microsoft/setup-msbuild@v2
 
-    - name: Build with Make
+    - name: Build Executable
       run: |
-        # Use make if available, or just run csc directly since we know the path on windows-latest
-        mkdir bin
+        mkdir bin -Force
         & "C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe" /target:winexe /unsafe /win32manifest:app.manifest /win32icon:app.ico /r:System.Windows.Forms.dll /r:System.Drawing.dll /r:System.dll /r:System.Core.dll /out:bin\VectorPowerHub.exe src\*.cs
+
+    - name: Build MSI Installer
+      run: |
+        & "C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe" /out:bin\BuildMsi.exe tools\BuildMsi.cs
+        & ".\bin\BuildMsi.exe"
 
     - name: Upload Artifact
       uses: actions/upload-artifact@v4
       with:
-        name: VectorPowerHub-Executable
-        path: bin\VectorPowerHub.exe
+        name: VectorPowerHub-Installer
+        path: bin\VectorPowerHub.msi
         if-no-files-found: error
