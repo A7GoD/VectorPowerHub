@@ -45,8 +45,8 @@ public partial class PowerCoreEngine : IDisposable {
                 ApplySettingsInternal("clamped", 4900, 2800, 4, 25, 0);
                 break;
             case "cold":
-                // P-core 0, E-core 0, Boost Mode 3, EPP 20%, GPU clamped 2100 MHz
-                ApplySettingsInternal("cold", 0, 0, 3, 20, 2100);
+                // P-core 0, E-core 0, Boost Mode 3, EPP 65%, GPU clamped 2100 MHz
+                ApplySettingsInternal("cold", 0, 0, 3, 65, 2100);
                 break;
             case "guaranteed":
                 // P-core 0, E-core 0, Boost Mode 6, EPP 25%, GPU stock

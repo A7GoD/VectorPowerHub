@@ -1,0 +1,32 @@
+name: Build Windows App
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup MSBuild paths
+      uses: microsoft/setup-msbuild@v2
+
+    - name: Build with Make
+      run: |
+        # Use make if available, or just run csc directly since we know the path on windows-latest
+        mkdir bin
+        & "C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe" /target:winexe /unsafe /win32manifest:app.manifest /win32icon:app.ico /r:System.Windows.Forms.dll /r:System.Drawing.dll /r:System.dll /r:System.Core.dll /out:bin\VectorPowerHub.exe src\*.cs
+
+    - name: Upload Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: VectorPowerHub-Executable
+        path: bin\VectorPowerHub.exe
+        if-no-files-found: error

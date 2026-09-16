@@ -25,6 +25,7 @@ public partial class PowerCoreEngine : IDisposable {
 
                 string fullPath = GetProcessPath(pid);
                 string lowerPath = (!string.IsNullOrEmpty(fullPath)) ? fullPath.ToLowerInvariant() : "";
+                string exeName = (!string.IsNullOrEmpty(fullPath)) ? Path.GetFileName(fullPath) : procName + ".exe";
 
                 // Disregard system and Windows background directories
                 if (!string.IsNullOrEmpty(lowerPath)) {
@@ -36,23 +37,36 @@ public partial class PowerCoreEngine : IDisposable {
                     }
                 }
 
-                bool isGame = false;
+                // 1. Reject Electron/CEF/Chromium desktop apps immediately unless verified game folder/engine
+                if (!string.IsNullOrEmpty(fullPath)) {
+                    try {
+                        string dir = Path.GetDirectoryName(fullPath);
+                        if (!string.IsNullOrEmpty(dir)) {
+                            bool isElectronApp = File.Exists(Path.Combine(dir, "resources\\app.asar")) ||
+                                File.Exists(Path.Combine(dir, "node.dll")) ||
+                                (File.Exists(Path.Combine(dir, "d3dcompiler_47.dll")) && File.Exists(Path.Combine(dir, "ffmpeg.dll"))) ||
+                                (File.Exists(Path.Combine(dir, "icudtl.dat")) && File.Exists(Path.Combine(dir, "v8_context_snapshot.bin")));
 
-                // 1. Instant check against Windows GameConfigStore cache
-                lock (_syncLock) {
-                    if (_knownGameExes.Contains(procName) || _knownGameExes.Contains(procName + ".exe")) {
-                        isGame = true;
-                    } else if (!string.IsNullOrEmpty(fullPath) && (_knownGamePaths.Contains(fullPath) || _knownGamePaths.Contains(lowerPath))) {
-                        isGame = true;
-                    } else if (!string.IsNullOrEmpty(fullPath)) {
-                        string exeName = Path.GetFileName(fullPath);
-                        if (!string.IsNullOrEmpty(exeName) && _knownGameExes.Contains(exeName)) {
-                            isGame = true;
+                            if (isElectronApp) {
+                                bool isVerifiedGame = false;
+                                for (int i = 0; i < GAME_PATH_HINTS.Length; i++) {
+                                    if (lowerPath.Contains(GAME_PATH_HINTS[i])) {
+                                        isVerifiedGame = true;
+                                        break;
+                                    }
+                                }
+                                if (!isVerifiedGame && File.Exists(Path.Combine(dir, "UnityPlayer.dll"))) {
+                                    isVerifiedGame = true;
+                                }
+                                if (!isVerifiedGame) return false;
+                            }
                         }
-                    }
+                    } catch { }
                 }
 
-                // 2. Check standard gaming root directories & launchers
+                bool isGame = IsRegisteredInGameConfigStore(fullPath, exeName);
+
+                // 2. Check standard gaming root directories & recognized libraries
                 if (!isGame && !string.IsNullOrEmpty(lowerPath)) {
                     for (int i = 0; i < GAME_PATH_HINTS.Length; i++) {
                         if (lowerPath.Contains(GAME_PATH_HINTS[i])) {
@@ -62,7 +76,7 @@ public partial class PowerCoreEngine : IDisposable {
                     }
                 }
 
-                // 3. Unreal Engine, Unity, and common game markers
+                // 3. Unreal Engine, Unity, and common 3D game engine signatures
                 if (!isGame) {
                     if (procName.EndsWith("-Win64-Shipping", StringComparison.OrdinalIgnoreCase) ||
                         procName.EndsWith("-Win32-Shipping", StringComparison.OrdinalIgnoreCase) ||
@@ -77,11 +91,6 @@ public partial class PowerCoreEngine : IDisposable {
                             }
                         } catch { }
                     }
-                }
-
-                // 4. Hardware Fallback: If discrete GPU is heavily active, allow non-system process
-                if (!isGame && fallbackPermissive) {
-                    isGame = true;
                 }
 
                 if (!isGame) return false;
@@ -152,18 +161,6 @@ public partial class PowerCoreEngine : IDisposable {
                 if (pName.Contains("crash") || pName.Contains("handler") || pName.Contains("helper")) continue;
                 string fName;
                 if (IsGameProcess(pid, false, out fName)) {
-                    gameName = fName;
-                    return pid;
-                }
-            }
-            for (int i = 0; i < procs.Length; i++) {
-                Process p = procs[i];
-                int pid = p.Id;
-                if (pid <= 4 || pid == _currentHubPid) continue;
-                string pName = p.ProcessName.ToLowerInvariant();
-                if (pName.Contains("crash") || pName.Contains("handler") || pName.Contains("helper")) continue;
-                string fName;
-                if (IsGameProcess(pid, true, out fName)) {
                     gameName = fName;
                     return pid;
                 }

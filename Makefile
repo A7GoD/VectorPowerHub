@@ -3,7 +3,10 @@
 # Target: Windows x64 (.NET Framework 4.0+ / C# 5 Compatible)
 # ==============================================================================
 
-CSC = C:/Windows/Microsoft.NET/Framework64/v4.0.30319/csc.exe
+SHELL = cmd.exe
+.SHELLFLAGS = /c
+
+CSC = C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe
 CSCFLAGS = /target:winexe /unsafe /win32manifest:app.manifest /win32icon:app.ico /r:System.Windows.Forms.dll /r:System.Drawing.dll /r:System.dll /r:System.Core.dll
 
 SRCS = src/*.cs
@@ -19,7 +22,7 @@ all: $(TARGET)
 
 $(TARGET): $(SRCS)
 	@if not exist bin mkdir bin
-	"$(CSC)" $(CSCFLAGS) /out:$(TARGET_WIN) src\*.cs
+	$(CSC) $(CSCFLAGS) /out:$(TARGET_WIN) src\*.cs
 
 test: $(TARGET)
 	@echo [TEST] Running headless telemetry self-test...
@@ -35,7 +38,7 @@ bench: $(TARGET)
 	@start "" $(TARGET_WIN) /bench
 
 msi: $(TARGET)
-	@if not exist $(BUILD_MSI_EXE) "$(CSC)" /out:$(BUILD_MSI_EXE) tools\BuildMsi.cs
+	@if not exist $(BUILD_MSI_EXE) $(CSC) /out:$(BUILD_MSI_EXE) tools\BuildMsi.cs
 	@$(BUILD_MSI_EXE)
 
 install: msi

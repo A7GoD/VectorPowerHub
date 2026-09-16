@@ -13,6 +13,8 @@ using Microsoft.Win32;
 
 namespace VectorPowerHub {
     public partial class VectorPowerHubForm : Form {
+        private static readonly Queue<double> _platformPowerHistory = new Queue<double>();
+
         // -----------------------------------------------------------------------------------------
         // TELEMETRY REFRESH LOOP (Every 750ms)
         // -----------------------------------------------------------------------------------------
@@ -28,6 +30,38 @@ namespace VectorPowerHub {
                 HubTelemetrySnapshot snap = bridge.GetSnapshot();
                 currentSnapshot = snap;
 
+                // Auto-Detect Platform Power Ceiling with 3-tick outlier rejection
+                if (PowerCoreEngine.Instance != null && PowerCoreEngine.Instance.AutoPowerCeiling && snap != null) {
+                    _platformPowerHistory.Enqueue(snap.TotalPlatformPowerW);
+                    while (_platformPowerHistory.Count > 3) {
+                        _platformPowerHistory.Dequeue();
+                    }
+                    if (_platformPowerHistory.Count == 3) {
+                        int currentCeiling = PowerCoreEngine.Instance.PlatformPowerCeilingW;
+                        bool allGreater = true;
+                        double minOfThree = double.MaxValue;
+                        foreach (double reading in _platformPowerHistory) {
+                            if (reading <= (double)currentCeiling) {
+                                allGreater = false;
+                                break;
+                            }
+                            if (reading < minOfThree) {
+                                minOfThree = reading;
+                            }
+                        }
+                        if (allGreater) {
+                            int newCeiling = (int)Math.Round(minOfThree);
+                            if (newCeiling <= currentCeiling) {
+                                newCeiling = currentCeiling + 1;
+                            }
+                            PowerCoreEngine.Instance.PlatformPowerCeilingW = newCeiling;
+                            PowerCoreEngine.Instance.SaveUserSettings();
+                        }
+                    }
+                } else if (_platformPowerHistory.Count > 0) {
+                    _platformPowerHistory.Clear();
+                }
+
                 // 1. Update FPS Card
                 cardFps.UpdateTelemetry(snap.Fps, snap.IsGameMode, snap.ActiveGameName, snap.ActiveGamePid);
 
@@ -42,7 +76,8 @@ namespace VectorPowerHub {
 
                 // 5. Update Per-Core Topology Control
                 if (topologyControl != null) {
-                    topologyControl.SetCoreData(snap.PerCoreGhz, snap.PerCoreUtil, snap.CpuPowerW);
+                    double cpuWatts = snap.CpuPowerW;
+                    topologyControl.SetCoreData(PowerCoreEngine.Instance.Topology, cpuWatts);
                 }
 
                 // Game ON / Game OFF automation transition detection

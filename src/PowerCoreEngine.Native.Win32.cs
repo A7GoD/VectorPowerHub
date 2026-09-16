@@ -10,9 +10,84 @@ using Microsoft.Win32;
 public partial class PowerCoreEngine : IDisposable {
     // NATIVE INTEROP STRUCTS & IMPORTS
     // ---------------------------------------------------------------------------------------------
-    private static class Win32Native {
+    public static class Win32Native {
         public const uint PROCESS_QUERY_LIMITED_INFORMATION = 0x1000;
         public const int DISPLAY_DEVICE_ATTACHED_TO_DESKTOP = 0x00000001;
+        public const int ERROR_INSUFFICIENT_BUFFER = 122;
+
+        public enum LOGICAL_PROCESSOR_RELATIONSHIP {
+            RelationProcessorCore = 0, RelationNumaNode = 1, RelationCache = 2,
+            RelationProcessorPackage = 3, RelationGroup = 4, RelationProcessorDie = 5,
+            RelationNumaNodeEx = 6, RelationProcessorModule = 7, RelationAll = 0xffff
+        }
+
+        public enum PROCESSOR_CACHE_TYPE {
+            CacheUnified = 0, CacheInstruction = 1, CacheData = 2, CacheTrace = 3
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct GROUP_AFFINITY {
+            public UIntPtr Mask;
+            public ushort Group;
+            public ushort Reserved0, Reserved1, Reserved2;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct PROCESSOR_RELATIONSHIP {
+            public byte Flags, EfficiencyClass;
+            public byte Reserved0, Reserved1, Reserved2, Reserved3, Reserved4, Reserved5, Reserved6, Reserved7;
+            public byte Reserved8, Reserved9, Reserved10, Reserved11, Reserved12, Reserved13, Reserved14, Reserved15;
+            public byte Reserved16, Reserved17, Reserved18, Reserved19;
+            public ushort GroupCount;
+            public GROUP_AFFINITY GroupMask;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct CACHE_RELATIONSHIP {
+            public byte Level, Associativity;
+            public ushort LineSize;
+            public uint CacheSize;
+            public PROCESSOR_CACHE_TYPE Type;
+            public byte Reserved0, Reserved1, Reserved2, Reserved3, Reserved4, Reserved5, Reserved6, Reserved7;
+            public byte Reserved8, Reserved9, Reserved10, Reserved11, Reserved12, Reserved13, Reserved14, Reserved15;
+            public byte Reserved16, Reserved17;
+            public ushort GroupCount;
+            public GROUP_AFFINITY GroupMask;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct NUMA_NODE_RELATIONSHIP {
+            public uint NodeNumber;
+            public byte Reserved0, Reserved1, Reserved2, Reserved3, Reserved4, Reserved5, Reserved6, Reserved7;
+            public byte Reserved8, Reserved9, Reserved10, Reserved11, Reserved12, Reserved13, Reserved14, Reserved15;
+            public byte Reserved16, Reserved17;
+            public ushort GroupCount;
+            public GROUP_AFFINITY GroupMask;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct PROCESSOR_GROUP_INFO {
+            public byte MaximumProcessorCount, ActiveProcessorCount;
+            public byte Reserved0, Reserved1, Reserved2, Reserved3;
+            public UIntPtr ActiveProcessorMask;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct GROUP_RELATIONSHIP {
+            public ushort MaximumGroupCount, ActiveGroupCount;
+            public byte Reserved0, Reserved1, Reserved2, Reserved3;
+            public PROCESSOR_GROUP_INFO GroupInfo;
+        }
+
+        [StructLayout(LayoutKind.Explicit)]
+        public struct SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX {
+            [FieldOffset(0)] public LOGICAL_PROCESSOR_RELATIONSHIP Relationship;
+            [FieldOffset(4)] public uint Size;
+            [FieldOffset(8)] public PROCESSOR_RELATIONSHIP Processor;
+            [FieldOffset(8)] public NUMA_NODE_RELATIONSHIP NumaNode;
+            [FieldOffset(8)] public CACHE_RELATIONSHIP Cache;
+            [FieldOffset(8)] public GROUP_RELATIONSHIP Group;
+        }
 
         [StructLayout(LayoutKind.Sequential)]
         public struct SYSTEM_POWER_STATUS {
@@ -27,15 +102,11 @@ public partial class PowerCoreEngine : IDisposable {
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
         public struct DISPLAY_DEVICE {
             public int cb;
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)]
-            public string DeviceName;
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)]
-            public string DeviceString;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 32)] public string DeviceName;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)] public string DeviceString;
             public int StateFlags;
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)]
-            public string DeviceID;
-            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)]
-            public string DeviceKey;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)] public string DeviceID;
+            [MarshalAs(UnmanagedType.ByValTStr, SizeConst = 128)] public string DeviceKey;
         }
 
         [DllImport("user32.dll")]
@@ -70,6 +141,12 @@ public partial class PowerCoreEngine : IDisposable {
 
         [DllImport("kernel32.dll", SetLastError = true)]
         public static extern bool CloseHandle(IntPtr hObject);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern bool GetLogicalProcessorInformationEx(LOGICAL_PROCESSOR_RELATIONSHIP RelationshipType, IntPtr Buffer, ref uint ReturnedLength);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        public static extern bool GetLogicalProcessorInformationEx(LOGICAL_PROCESSOR_RELATIONSHIP RelationshipType, [Out] byte[] Buffer, ref uint ReturnedLength);
     }
 
     public static bool CheckNvidiaDisplayAttached(out string monitorName) {

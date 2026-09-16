@@ -171,6 +171,8 @@ namespace VectorPowerHub {
 
             // 3. Arrow Lake-HX 24-Core Topology Control
             topologyControl = new PerCoreTopologyControl();
+            double cpuWatts = 0.0;
+            topologyControl.SetCoreData(PowerCoreEngine.Instance.Topology, cpuWatts);
             panelTopologyView.Controls.Add(topologyControl);
 
             this.Controls.Add(panelTopologyView);

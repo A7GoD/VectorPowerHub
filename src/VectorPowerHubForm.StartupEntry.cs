@@ -42,7 +42,7 @@ namespace VectorPowerHub {
                         Console.WriteLine(string.Format("  In-Game FPS: {0:0.0}", s.Fps));
                         Console.WriteLine(string.Format("  CPU Package Power: {0:0.0} W (P-Core: {1:0.00} GHz | E-Core: {2:0.00} GHz)", s.CpuPowerW, s.PCoreGhz, s.ECoreGhz));
                         Console.WriteLine(string.Format("  GPU Dynamic Draw: {0:0.0} W (Clock: {1} MHz | Temp: {2} C | Util: {3}%)", s.GpuPowerW, s.GpuClockMhz, s.GpuTempC, s.GpuUtilPct));
-                        Console.WriteLine(string.Format("  Total Platform Draw: {0:0.0} W / 215.0 W Ceiling", s.TotalPlatformPowerW));
+                        Console.WriteLine(string.Format("  Total Platform Draw: {0:0.0} W / {1:0.0} W Ceiling", s.TotalPlatformPowerW, PowerCoreEngine.Instance.PlatformPowerCeilingW));
                         Console.WriteLine(string.Format("  GPU Status Badge: {0}", s.GpuStatus));
                         Console.WriteLine(string.Format("  Display Attached: {0} ({1})", s.IsNvidiaDisplayAttached, s.NvidiaMonitorName));
                         Console.WriteLine(string.Format("  Active Profile: {0}", form.currentSelectedProfile));
@@ -65,7 +65,7 @@ namespace VectorPowerHub {
                             form.OnTelemetryTick(null, EventArgs.Empty);
                             if (t == 1 && form.benchResultsGrid != null) {
                                 BenchmarkResultInfo r1 = new BenchmarkResultInfo();
-                                r1.ProfileId = "snappy"; r1.ProfileName = "⚡ Snappy-Pacing (Mode 4 / EPP 30%)";
+                                r1.ProfileId = "snappy"; r1.ProfileName = "Snappy-Pacing (Mode 4 / EPP 30%)";
                                 r1.CleanedAvgFps = 144.2; r1.RawAvgFps = 141.8;
                                 r1.CleanedOnePercentLow = 98.5; r1.RawOnePercentLow = 84.1;
                                 r1.AvgCpuPowerW = 46.2; r1.AvgGpuPowerW = 118.5; r1.AvgTotalPowerW = 164.7;
@@ -73,7 +73,7 @@ namespace VectorPowerHub {
                                 form.benchResultsGrid.AddOrUpdateResult(r1);
 
                                 BenchmarkResultInfo r2 = new BenchmarkResultInfo();
-                                r2.ProfileId = "clamped"; r2.ProfileName = "✦ Sweet-Spot Efficiency (4.9 GHz / 58W)";
+                                r2.ProfileId = "clamped"; r2.ProfileName = "Sweet-Spot Efficiency (4.9 GHz / 58W)";
                                 r2.CleanedAvgFps = 138.6; r2.RawAvgFps = 137.0;
                                 r2.CleanedOnePercentLow = 95.2; r2.RawOnePercentLow = 91.0;
                                 r2.AvgCpuPowerW = 38.4; r2.AvgGpuPowerW = 118.1; r2.AvgTotalPowerW = 156.5;
@@ -82,14 +82,14 @@ namespace VectorPowerHub {
                                 form.benchResultsGrid.AddOrUpdateResult(r2);
 
                                 BenchmarkResultInfo r3 = new BenchmarkResultInfo();
-                                r3.ProfileId = "cold"; r3.ProfileName = "❄ Cold & Quiet (GPU 2100 MHz)";
+                                r3.ProfileId = "cold"; r3.ProfileName = "Cold & Quiet (GPU 2100 MHz)";
                                 r3.CleanedAvgFps = 0.0; r3.RawAvgFps = 0.0;
                                 r3.CleanedOnePercentLow = 0.0; r3.RawOnePercentLow = 0.0;
                                 r3.AvgCpuPowerW = 28.5; r3.AvgGpuPowerW = 85.2; r3.AvgTotalPowerW = 113.7;
                                 form.benchResultsGrid.AddOrUpdateResult(r3);
 
                                 BenchmarkResultInfo r4 = new BenchmarkResultInfo();
-                                r4.ProfileId = "guaranteed"; r4.ProfileName = "★ Efficient Guaranteed (Mode 6 / EPP 25%)";
+                                r4.ProfileId = "guaranteed"; r4.ProfileName = "Efficient Guaranteed (Mode 6 / EPP 25%)";
                                 r4.CleanedAvgFps = 142.5; r4.RawAvgFps = 140.8;
                                 r4.CleanedOnePercentLow = 96.2; r4.RawOnePercentLow = 88.5;
                                 r4.AvgCpuPowerW = 48.0; r4.AvgGpuPowerW = 118.3; r4.AvgTotalPowerW = 166.3;
@@ -120,23 +120,23 @@ namespace VectorPowerHub {
             bool createdNew = false;
             using (Mutex appMutex = new Mutex(true, "VectorPowerHub_SingleInstance_Mutex", out createdNew)) {
                 if (!createdNew) {
+                    if (args != null && args.Length > 0 && (args[0] == "/test" || args[0] == "--test")) {
+                        return;
+                    }
                     // Another instance is already running!
                     if (!startMinimized) {
-                        // 1. Signal named EventWaitHandle to restore and activate primary instance
                         try {
                             using (EventWaitHandle wakeEvent = EventWaitHandle.OpenExisting("VectorPowerHub_WakeEvent")) {
                                 wakeEvent.Set();
                             }
                         } catch { }
 
-                        // 2. Broadcast registered window message
                         try {
                             if (WM_SHOW_HUB != 0) {
                                 PostMessage((IntPtr)HWND_BROADCAST, WM_SHOW_HUB, IntPtr.Zero, IntPtr.Zero);
                             }
                         } catch { }
 
-                        // 3. Bring existing process window to foreground
                         try {
                             Process current = Process.GetCurrentProcess();
                             foreach (Process p in Process.GetProcessesByName(current.ProcessName)) {
@@ -151,16 +151,19 @@ namespace VectorPowerHub {
                         } catch { }
                     }
 
-                    // Exit immediately without creating duplicate windows or tray icons
                     return;
                 }
 
                 Application.EnableVisualStyles();
                 Application.SetCompatibleTextRenderingDefault(false);
+                if (!File.Exists(PowerCoreEngine.SettingsFilePath)) {
+                    int chosen = ShowPowerCeilingPrompt(PowerCoreEngine.Instance.PlatformPowerCeilingW);
+                    PowerCoreEngine.Instance.PlatformPowerCeilingW = chosen;
+                }
                 Application.Run(new VectorPowerHubForm(initialTab, startMinimized));
                 GC.KeepAlive(appMutex);
             }
         }
 
     }
-}
+}

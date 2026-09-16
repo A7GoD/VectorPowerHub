@@ -63,9 +63,18 @@ namespace VectorPowerHub {
                 RestoreFromTray();
                 SwitchTab(1);
             });
+            MenuItem trayMenuCeiling = new MenuItem("Change Power Ceiling...", (s, e) => {
+                int cur = PowerCoreEngine.Instance.PlatformPowerCeilingW;
+                int chosen = ShowPowerCeilingPrompt(cur);
+                if (chosen > 0) {
+                    PowerCoreEngine.Instance.PlatformPowerCeilingW = chosen;
+                    if (cardPlatformPower != null) cardPlatformPower.Invalidate();
+                }
+            });
 
             trayMenu.MenuItems.Add(trayMenuCustom);
             trayMenu.MenuItems.Add(trayMenuBenchmark);
+            trayMenu.MenuItems.Add(trayMenuCeiling);
             trayMenu.MenuItems.Add(new MenuItem("-"));
 
             trayMenuStartup = new MenuItem("⚡ Start with Windows (Run at Startup)", (s, e) => ToggleRunAtStartup());

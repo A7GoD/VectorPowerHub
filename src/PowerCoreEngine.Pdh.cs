@@ -1,11 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading;
-using Microsoft.Win32;
 
 public partial class PowerCoreEngine : IDisposable {
     // CPU TELEMETRY (PDH P/INVOKE)
@@ -17,17 +12,48 @@ public partial class PowerCoreEngine : IDisposable {
                 _hPdhQuery = IntPtr.Zero;
             }
 
+            BuildTopology();
+
             uint res = PdhNative.PdhOpenQueryW(null, IntPtr.Zero, out _hPdhQuery);
             if (res == 0) {
                 PdhNative.PdhAddEnglishCounterW(_hPdhQuery, @"\Energy Meter(RAPL_Package0_PKG)\Power", IntPtr.Zero, out _hPdhCounterPwr);
-                PdhNative.PdhAddEnglishCounterW(_hPdhQuery, @"\Processor Information(0,0)\% Processor Performance", IntPtr.Zero, out _hPdhCounterPCore);
-                PdhNative.PdhAddEnglishCounterW(_hPdhQuery, @"\Processor Information(0,14)\% Processor Performance", IntPtr.Zero, out _hPdhCounterECore);
 
-                _hPdhCounterPerCore = new IntPtr[24];
-                _hPdhCounterPerCoreUtil = new IntPtr[24];
-                for (int i = 0; i < 24; i++) {
-                    PdhNative.PdhAddEnglishCounterW(_hPdhQuery, string.Format(@"\Processor Information(0,{0})\% Processor Performance", i), IntPtr.Zero, out _hPdhCounterPerCore[i]);
-                    PdhNative.PdhAddEnglishCounterW(_hPdhQuery, string.Format(@"\Processor Information(0,{0})\% Processor Utility", i), IntPtr.Zero, out _hPdhCounterPerCoreUtil[i]);
+                int firstPCoreId = 0, firstECoreId = 0;
+                if (this.Topology != null && this.Topology.Clusters != null) {
+                    for (int c = 0; c < this.Topology.Clusters.Count; c++) {
+                        CpuCluster cl = this.Topology.Clusters[c];
+                        if (cl.Cores != null && cl.Cores.Count > 0) {
+                            if (cl.EfficiencyClass > 0 && firstPCoreId == 0) firstPCoreId = cl.Cores[0].Id;
+                            else if (cl.EfficiencyClass == 0 && firstECoreId == 0) firstECoreId = cl.Cores[0].Id;
+                        }
+                    }
+                }
+                PdhNative.PdhAddEnglishCounterW(_hPdhQuery, string.Format(@"\Processor Information(0,{0})\% Processor Performance", firstPCoreId), IntPtr.Zero, out _hPdhCounterPCore);
+                PdhNative.PdhAddEnglishCounterW(_hPdhQuery, string.Format(@"\Processor Information(0,{0})\% Processor Performance", firstECoreId), IntPtr.Zero, out _hPdhCounterECore);
+
+                int totalCores = (this.Topology != null && this.Topology.TotalCores > 0) ? this.Topology.TotalCores : Environment.ProcessorCount;
+                _hPdhCounterPerCore = new IntPtr[totalCores];
+                _hPdhCounterPerCoreUtil = new IntPtr[totalCores];
+
+                int coreIdx = 0;
+                if (this.Topology != null && this.Topology.Clusters != null) {
+                    for (int c = 0; c < this.Topology.Clusters.Count; c++) {
+                        CpuCluster cluster = this.Topology.Clusters[c];
+                        if (cluster.Cores == null) continue;
+                        for (int k = 0; k < cluster.Cores.Count; k++) {
+                            if (coreIdx >= totalCores) break;
+                            CpuCore core = cluster.Cores[k];
+                            PdhNative.PdhAddEnglishCounterW(_hPdhQuery, string.Format(@"\Processor Information(0,{0})\% Processor Performance", core.Id), IntPtr.Zero, out _hPdhCounterPerCore[coreIdx]);
+                            PdhNative.PdhAddEnglishCounterW(_hPdhQuery, string.Format(@"\Processor Information(0,{0})\% Processor Utility", core.Id), IntPtr.Zero, out _hPdhCounterPerCoreUtil[coreIdx]);
+                            coreIdx++;
+                        }
+                    }
+                }
+
+                while (coreIdx < totalCores) {
+                    PdhNative.PdhAddEnglishCounterW(_hPdhQuery, string.Format(@"\Processor Information(0,{0})\% Processor Performance", coreIdx), IntPtr.Zero, out _hPdhCounterPerCore[coreIdx]);
+                    PdhNative.PdhAddEnglishCounterW(_hPdhQuery, string.Format(@"\Processor Information(0,{0})\% Processor Utility", coreIdx), IntPtr.Zero, out _hPdhCounterPerCoreUtil[coreIdx]);
+                    coreIdx++;
                 }
 
                 // Initial baseline sample
@@ -43,8 +69,13 @@ public partial class PowerCoreEngine : IDisposable {
         cpuWatts = 0.0;
         pCoreGhz = 0.0;
         eCoreGhz = 0.0;
-        perCoreGhz = new double[24];
-        perCoreUtil = new double[24];
+
+        int totalCores = (_hPdhCounterPerCore != null && _hPdhCounterPerCore.Length > 0)
+            ? _hPdhCounterPerCore.Length
+            : ((this.Topology != null && this.Topology.TotalCores > 0) ? this.Topology.TotalCores : Environment.ProcessorCount);
+
+        perCoreGhz = new double[totalCores];
+        perCoreUtil = new double[totalCores];
 
         if (!_isPdhInitialized || _hPdhQuery == IntPtr.Zero) {
             InitPdh();
@@ -63,29 +94,76 @@ public partial class PowerCoreEngine : IDisposable {
 
                 double pSum = 0; int pCount = 0;
                 double eSum = 0; int eCount = 0;
+                int idx = 0;
 
-                for (int i = 0; i < 24; i++) {
-                    if (_hPdhCounterPerCore != null && _hPdhCounterPerCore[i] != IntPtr.Zero) {
-                        PdhNative.PDH_FMT_COUNTERVALUE_DOUBLE val;
-                        if (PdhNative.PdhGetFormattedCounterValue(_hPdhCounterPerCore[i], PdhNative.PDH_FMT_DOUBLE, IntPtr.Zero, out val) == 0) {
-                            double nominal = (i < 8) ? 2.7 : 2.1;
-                            double ghz = (val.doubleValue / 100.0) * nominal;
-                            if (ghz < 0.0) ghz = 0.0;
-                            perCoreGhz[i] = ghz;
-                            if (i < 8) { pSum += ghz; pCount++; }
+                if (this.Topology != null && this.Topology.Clusters != null && this.Topology.Clusters.Count > 0) {
+                    for (int c = 0; c < this.Topology.Clusters.Count; c++) {
+                        CpuCluster cluster = this.Topology.Clusters[c];
+                        if (cluster.Cores == null) continue;
+                        for (int k = 0; k < cluster.Cores.Count; k++) {
+                            if (idx >= totalCores) break;
+                            CpuCore core = cluster.Cores[k];
+
+                            double ghz = 0.0;
+                            double u = 0.0;
+
+                            if (_hPdhCounterPerCore != null && idx < _hPdhCounterPerCore.Length && _hPdhCounterPerCore[idx] != IntPtr.Zero) {
+                                PdhNative.PDH_FMT_COUNTERVALUE_DOUBLE val;
+                                if (PdhNative.PdhGetFormattedCounterValue(_hPdhCounterPerCore[idx], PdhNative.PDH_FMT_DOUBLE, IntPtr.Zero, out val) == 0) {
+                                    double nominal = (core.EfficiencyClass > 0) ? 2.7 : 2.1;
+                                    ghz = (val.doubleValue / 100.0) * nominal;
+                                    if (ghz < 0.0) ghz = 0.0;
+                                }
+                            }
+
+                            if (_hPdhCounterPerCoreUtil != null && idx < _hPdhCounterPerCoreUtil.Length && _hPdhCounterPerCoreUtil[idx] != IntPtr.Zero) {
+                                PdhNative.PDH_FMT_COUNTERVALUE_DOUBLE val;
+                                if (PdhNative.PdhGetFormattedCounterValue(_hPdhCounterPerCoreUtil[idx], PdhNative.PDH_FMT_DOUBLE, IntPtr.Zero, out val) == 0) {
+                                    u = val.doubleValue;
+                                    if (u < 0.0) u = 0.0;
+                                    if (u > 100.0) u = 100.0;
+                                }
+                            }
+
+                            perCoreGhz[idx] = ghz;
+                            perCoreUtil[idx] = u;
+                            core.CurrentGhz = ghz;
+                            core.CurrentUtil = u;
+
+                            if (core.EfficiencyClass > 0) { pSum += ghz; pCount++; }
                             else { eSum += ghz; eCount++; }
+                            idx++;
+                        }
+                    }
+                }
+
+                while (idx < totalCores) {
+                    double ghz = 0.0;
+                    double u = 0.0;
+
+                    if (_hPdhCounterPerCore != null && idx < _hPdhCounterPerCore.Length && _hPdhCounterPerCore[idx] != IntPtr.Zero) {
+                        PdhNative.PDH_FMT_COUNTERVALUE_DOUBLE val;
+                        if (PdhNative.PdhGetFormattedCounterValue(_hPdhCounterPerCore[idx], PdhNative.PDH_FMT_DOUBLE, IntPtr.Zero, out val) == 0) {
+                            double nominal = (idx < 8) ? 2.7 : 2.1;
+                            ghz = (val.doubleValue / 100.0) * nominal;
+                            if (ghz < 0.0) ghz = 0.0;
                         }
                     }
 
-                    if (_hPdhCounterPerCoreUtil != null && _hPdhCounterPerCoreUtil[i] != IntPtr.Zero) {
+                    if (_hPdhCounterPerCoreUtil != null && idx < _hPdhCounterPerCoreUtil.Length && _hPdhCounterPerCoreUtil[idx] != IntPtr.Zero) {
                         PdhNative.PDH_FMT_COUNTERVALUE_DOUBLE val;
-                        if (PdhNative.PdhGetFormattedCounterValue(_hPdhCounterPerCoreUtil[i], PdhNative.PDH_FMT_DOUBLE, IntPtr.Zero, out val) == 0) {
-                            double u = val.doubleValue;
+                        if (PdhNative.PdhGetFormattedCounterValue(_hPdhCounterPerCoreUtil[idx], PdhNative.PDH_FMT_DOUBLE, IntPtr.Zero, out val) == 0) {
+                            u = val.doubleValue;
                             if (u < 0.0) u = 0.0;
                             if (u > 100.0) u = 100.0;
-                            perCoreUtil[i] = u;
                         }
                     }
+
+                    perCoreGhz[idx] = ghz;
+                    perCoreUtil[idx] = u;
+                    if (idx < 8) { pSum += ghz; pCount++; }
+                    else { eSum += ghz; eCount++; }
+                    idx++;
                 }
 
                 pCoreGhz = (pCount > 0) ? (pSum / pCount) : 0.0;

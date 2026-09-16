@@ -95,4 +95,57 @@ public class BenchmarkResult {
         ProfileName = "";
         Samples = new List<BenchmarkSample>();
     }
-}
+}
+
+public class CpuCore {
+    public int Id;
+    public byte EfficiencyClass;
+    public double CurrentGhz;
+    public double CurrentUtil;
+    public ulong AffinityMask;
+    public bool IsParked;
+    public byte Flags;
+
+    public CpuCore() { }
+
+    public CpuCore(int id, byte efficiencyClass) {
+        this.Id = id;
+        this.EfficiencyClass = efficiencyClass;
+    }
+}
+
+public class CpuCluster<TCore> where TCore : CpuCore {
+    public int ClusterId;
+    public string Name;
+    public byte EfficiencyClass;
+    public List<TCore> Cores;
+
+    public CpuCluster() {
+        this.Name = "";
+        this.Cores = new List<TCore>();
+    }
+}
+
+public class CpuCluster : CpuCluster<CpuCore> {
+    public CpuCluster() : base() { }
+
+    public CpuCluster(int clusterId, string name, byte efficiencyClass) : base() {
+        this.ClusterId = clusterId;
+        this.Name = name;
+        this.EfficiencyClass = efficiencyClass;
+    }
+}
+
+public class CpuTopology<TCluster> where TCluster : CpuCluster {
+    public List<TCluster> Clusters;
+    public int TotalCores;
+
+    public CpuTopology() {
+        this.Clusters = new List<TCluster>();
+    }
+}
+
+public class CpuTopology : CpuTopology<CpuCluster> {
+    public CpuTopology() : base() { }
+}
+

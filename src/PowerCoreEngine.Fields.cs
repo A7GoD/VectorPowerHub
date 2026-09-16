@@ -108,8 +108,12 @@ public partial class PowerCoreEngine : IDisposable {
     };
 
     private static readonly string[] GAME_PATH_HINTS = new string[] {
-        "steamapps", "steamlibrary", @"\common\", "epic games", "riot games", "xboxgames",
-        "ubisoft", "ea games", "gog galaxy", @"\games\",
+        @"steamapps\common\", "steamapps", "steamlibrary",
+        "xboxgames", "epic games", "riot games",
+        "ubisoft game launcher", "ubisoft",
+        @"gog galaxy\games\", "gog galaxy",
+        "battle.net", "origin games", "ea games",
+        @"windowsapps\", @"\games\",
         @"binaries\win64", @"binaries\win32", "binaries/win64", "binaries/win32"
     };
 
@@ -160,4 +164,4 @@ public partial class PowerCoreEngine : IDisposable {
 
     // ---------------------------------------------------------------------------------------------
 
-}
+}

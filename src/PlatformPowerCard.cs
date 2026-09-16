@@ -54,6 +54,12 @@ namespace VectorPowerHub {
                 using (Pen p = new Pen(VectorPowerHubForm.ColorBorder, 1f)) g.DrawPath(p, path);
             }
 
+            int ceilingW = 215;
+            try {
+                if (PowerCoreEngine.Instance != null) ceilingW = PowerCoreEngine.Instance.PlatformPowerCeilingW;
+            } catch { }
+            if (ceilingW <= 0) ceilingW = 215;
+
             // Purple Accent Stripe
             using (Brush b = new SolidBrush(VectorPowerHubForm.ColorAccentPurple)) {
                 g.FillRectangle(b, 12, 0, w - 24, 2);
@@ -62,12 +68,13 @@ namespace VectorPowerHub {
             // Title Left
             using (Font fTitle = new Font("Segoe UI", 9f, FontStyle.Bold))
             using (Brush bTitle = new SolidBrush(VectorPowerHubForm.ColorTextMuted)) {
-                g.DrawString("TOTAL PLATFORM DRAW (215W CEILING)", fTitle, bTitle, 16, 10);
+                g.DrawString(string.Format("TOTAL PLATFORM DRAW ({0}W CEILING)", ceilingW), fTitle, bTitle, 16, 10);
             }
 
             // Monospace Jitter-Free Readout Right (Consolas 13pt Bold)
-            string valStr = string.Format("{0:0.0} W / 215.0 W", totalW);
-            Color valColor = (totalW > 215.0) ? VectorPowerHubForm.ColorAccentRed : ((totalW > 195.0) ? VectorPowerHubForm.ColorAccentGold : VectorPowerHubForm.ColorAccentPurple);
+            string valStr = string.Format("{0:0.0} W / {1:0.0} W", totalW, (double)ceilingW);
+            double highWarn = ceilingW - 20.0;
+            Color valColor = (totalW > (double)ceilingW) ? VectorPowerHubForm.ColorAccentRed : ((totalW > highWarn) ? VectorPowerHubForm.ColorAccentGold : VectorPowerHubForm.ColorAccentPurple);
             using (Font fVal = new Font("Consolas", 14f, FontStyle.Bold))
             using (Brush bVal = new SolidBrush(valColor)) {
                 SizeF sz = g.MeasureString(valStr, fVal);
@@ -86,7 +93,7 @@ namespace VectorPowerHub {
             }
 
             // Compute widths
-            float maxW = 215.0f;
+            float maxW = (float)ceilingW;
             float cpuPixels = (float)((cpuW / maxW) * barW);
             float gpuPixels = (float)((gpuW / maxW) * barW);
             if (cpuPixels + gpuPixels > barW) {
@@ -116,7 +123,7 @@ namespace VectorPowerHub {
                 using (Pen p = new Pen(VectorPowerHubForm.ColorBorder, 1f)) g.DrawPath(p, bPath);
             }
 
-            // Dashed 215W Ceiling Line
+            // Dashed Ceiling Line
             using (Pen pCeil = new Pen(VectorPowerHubForm.ColorAccentRed, 1.5f)) {
                 pCeil.DashStyle = DashStyle.Dash;
                 g.DrawLine(pCeil, barX + barW - 1, barY - 2, barX + barW - 1, barY + barH + 2);
@@ -134,20 +141,20 @@ namespace VectorPowerHub {
             // Dynamic Status Pill (Y = 92, H = 22)
             string pText;
             Color pBg, pBorder, pDot, pTextCol;
-            if (totalW > 215.0) {
-                pText = "⚡ 215W MAXIMUM PLATFORM CEILING EXCEEDED";
+            if (totalW > (double)ceilingW) {
+                pText = string.Format("⚡ {0}W MAXIMUM PLATFORM CEILING EXCEEDED", ceilingW);
                 pBg = Color.FromArgb(48, 18, 18);
                 pBorder = Color.FromArgb(96, 32, 32);
                 pDot = VectorPowerHubForm.ColorAccentRed;
                 pTextCol = VectorPowerHubForm.ColorAccentRed;
-            } else if (totalW > 195.0) {
+            } else if (totalW > highWarn) {
                 pText = "⚡ PEAK DYNAMIC BOOST ACTIVE (FULL 140W TGP ALLOCATED)";
                 pBg = Color.FromArgb(45, 32, 12);
                 pBorder = Color.FromArgb(90, 60, 20);
                 pDot = VectorPowerHubForm.ColorAccentGold;
                 pTextCol = VectorPowerHubForm.ColorAccentGold;
             } else {
-                double headroom = Math.Max(0.0, 215.0 - totalW);
+                double headroom = Math.Max(0.0, (double)ceilingW - totalW);
                 pText = string.Format("⚡ BALANCED LOAD • {0:0.0}W DYNAMIC BOOST HEADROOM VERIFIED", headroom);
                 pBg = Color.FromArgb(16, 32, 42);
                 pBorder = Color.FromArgb(24, 60, 80);

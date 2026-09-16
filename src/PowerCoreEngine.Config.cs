@@ -8,6 +8,12 @@ public partial class PowerCoreEngine {
 
     public static readonly string SettingsFilePath = Path.Combine(SettingsDirectory, "settings.json");
 
+    private int _platformPowerCeilingW = 215;
+    public int PlatformPowerCeilingW { get { return _platformPowerCeilingW; } set { _platformPowerCeilingW = value; SaveUserSettings(); } }
+
+    private bool _autoPowerCeiling = false;
+    public bool AutoPowerCeiling { get { return _autoPowerCeiling; } set { _autoPowerCeiling = value; SaveUserSettings(); } }
+
     public void LoadUserSettings() {
         lock (_syncLock) {
             try {
@@ -30,6 +36,9 @@ public partial class PowerCoreEngine {
                 if (ExtractJsonInt(text, "CustomBoostMode", out val)) _customBoostMode = val;
                 if (ExtractJsonInt(text, "CustomEpp", out val)) _customEpp = val;
                 if (ExtractJsonInt(text, "CustomGpuClockMhz", out val)) _customGpuClockMhz = val;
+                if (ExtractJsonInt(text, "PlatformPowerCeilingW", out val) && val > 0) _platformPowerCeilingW = val;
+                bool autoCeiling;
+                if (ExtractJsonBool(text, "AutoPowerCeiling", out autoCeiling)) _autoPowerCeiling = autoCeiling;
             } catch { }
         }
     }
@@ -79,7 +88,7 @@ public partial class PowerCoreEngine {
         try {
             if (!Directory.Exists(SettingsDirectory)) Directory.CreateDirectory(SettingsDirectory);
             string json = string.Format(
-                "{{\n  \"SelectedGamingProfile\": \"snappy\",\n  \"SelectedDesktopProfile\": \"desktop\",\n  \"AutoProfileSwitching\": true,\n  \"CustomPCoreMhz\": 4900,\n  \"CustomECoreMhz\": 2800,\n  \"CustomBoostMode\": 4,\n  \"CustomEpp\": 25,\n  \"CustomGpuClockMhz\": 0,\n  \"StartMinimized\": {0},\n  \"LastActiveTab\": {1}\n}}\n",
+                "{{\n  \"SelectedGamingProfile\": \"snappy\",\n  \"SelectedDesktopProfile\": \"desktop\",\n  \"AutoProfileSwitching\": true,\n  \"CustomPCoreMhz\": 4900,\n  \"CustomECoreMhz\": 2800,\n  \"CustomBoostMode\": 4,\n  \"CustomEpp\": 25,\n  \"CustomGpuClockMhz\": 0,\n  \"PlatformPowerCeilingW\": 215,\n  \"AutoPowerCeiling\": false,\n  \"StartMinimized\": {0},\n  \"LastActiveTab\": {1}\n}}\n",
                 startMinimized ? "true" : "false", lastActiveTab);
             File.WriteAllText(SettingsFilePath, json, Encoding.UTF8);
         } catch { }
@@ -90,10 +99,12 @@ public partial class PowerCoreEngine {
             try {
                 if (!Directory.Exists(SettingsDirectory)) Directory.CreateDirectory(SettingsDirectory);
                 string json = string.Format(
-                    "{{\n  \"SelectedGamingProfile\": \"{0}\",\n  \"SelectedDesktopProfile\": \"{1}\",\n  \"AutoProfileSwitching\": {2},\n  \"CustomPCoreMhz\": {3},\n  \"CustomECoreMhz\": {4},\n  \"CustomBoostMode\": {5},\n  \"CustomEpp\": {6},\n  \"CustomGpuClockMhz\": {7},\n  \"StartMinimized\": {8},\n  \"LastActiveTab\": {9}\n}}\n",
+                    "{{\n  \"SelectedGamingProfile\": \"{0}\",\n  \"SelectedDesktopProfile\": \"{1}\",\n  \"AutoProfileSwitching\": {2},\n  \"CustomPCoreMhz\": {3},\n  \"CustomECoreMhz\": {4},\n  \"CustomBoostMode\": {5},\n  \"CustomEpp\": {6},\n  \"CustomGpuClockMhz\": {7},\n  \"PlatformPowerCeilingW\": {8},\n  \"AutoPowerCeiling\": {9},\n  \"StartMinimized\": {10},\n  \"LastActiveTab\": {11}\n}}\n",
                     EscapeJson(_selectedGamingProfile), EscapeJson(_selectedDesktopProfile),
                     _autoProfileSwitching ? "true" : "false",
                     _customPCoreMhz, _customECoreMhz, _customBoostMode, _customEpp, _customGpuClockMhz,
+                    _platformPowerCeilingW,
+                    _autoPowerCeiling ? "true" : "false",
                     startMinimized ? "true" : "false", lastActiveTab);
                 File.WriteAllText(SettingsFilePath, json, Encoding.UTF8);
             } catch { }

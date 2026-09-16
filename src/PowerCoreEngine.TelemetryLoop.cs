@@ -108,27 +108,7 @@ public partial class PowerCoreEngine : IDisposable {
             } catch { }
         }
 
-        // Pass 3: Scan all presenting processes in cycleFpsMap for any valid game
-        if (detectedGamePid == 0) {
-            double highestFps = 0.0;
-            foreach (KeyValuePair<int, double> kvp in cycleFpsMap) {
-                int pid = kvp.Key;
-                double fps = kvp.Value;
-                if (fps >= 10.0 && pid > 4 && pid != _currentHubPid) {
-                    string gameName;
-                    if (IsGameProcess(pid, false, out gameName)) {
-                        if (fps > highestFps) {
-                            highestFps = fps;
-                            detectedGamePid = pid;
-                            detectedGameName = gameName;
-                            detectedFps = fps;
-                        }
-                    }
-                }
-            }
-        }
-
-        // Pass 3b: Permissive check for presenting game (custom directories, child processes, EA/Xbox titles)
+        // Pass 3: Scan all presenting processes in cycleFpsMap for any positively identified game
         if (detectedGamePid == 0) {
             double highestFps = 0.0;
             foreach (KeyValuePair<int, double> kvp in cycleFpsMap) {
@@ -136,7 +116,7 @@ public partial class PowerCoreEngine : IDisposable {
                 double fps = kvp.Value;
                 if (fps >= 10.0 && pid > 4 && pid != _currentHubPid && pid != _dwmPid) {
                     string gameName;
-                    if (IsGameProcess(pid, true, out gameName)) {
+                    if (IsGameProcess(pid, false, out gameName)) {
                         if (fps > highestFps) {
                             highestFps = fps;
                             detectedGamePid = pid;
@@ -168,7 +148,7 @@ public partial class PowerCoreEngine : IDisposable {
                 }
                 if (detectedGamePid == 0 && foregroundPid > 4 && foregroundPid != _currentHubPid) {
                     string fgName;
-                    if (IsGameProcess(foregroundPid, true, out fgName)) {
+                    if (IsGameProcess(foregroundPid, false, out fgName)) {
                         detectedGamePid = foregroundPid;
                         detectedGameName = fgName;
                         detectedFps = ResolveFallbackFps(cycleFpsMap);

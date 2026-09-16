@@ -13,17 +13,15 @@ using Microsoft.Win32;
 
 namespace VectorPowerHub {
     public partial class PerCoreTopologyControl : Control {
-        private double[] coreGhz = new double[24];
-        private double[] coreUtil = new double[24];
+        private CpuTopology topology;
         private double pkgPowerW = 0.0;
 
         public PerCoreTopologyControl() {
             this.DoubleBuffered = true;
             this.SetStyle(ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint | ControlStyles.OptimizedDoubleBuffer, true);
             this.BackColor = Color.FromArgb(18, 19, 24); // Force dark slate — prevents white flash
-            for (int i = 0; i < 24; i++) {
-                coreGhz[i] = (i < 8) ? 2.7 : 2.1;
-                coreUtil[i] = 0.0;
+            if (PowerCoreEngine.Instance != null) {
+                this.topology = PowerCoreEngine.Instance.Topology;
             }
         }
 
@@ -31,14 +29,9 @@ namespace VectorPowerHub {
             // Suppress default background erase
         }
 
-        public void SetCoreData(double[] ghz, double[] util, double pkgW) {
-            if (ghz != null && ghz.Length == 24) {
-                Array.Copy(ghz, this.coreGhz, 24);
-            }
-            if (util != null && util.Length == 24) {
-                Array.Copy(util, this.coreUtil, 24);
-            }
-            this.pkgPowerW = pkgW;
+        public void SetCoreData(CpuTopology topology, double pkgPowerW) {
+            this.topology = topology;
+            this.pkgPowerW = pkgPowerW;
             this.Invalidate();
         }
 
@@ -49,10 +42,16 @@ namespace VectorPowerHub {
 
             int w = this.Width;
             int h = this.Height;
+            if (w <= 0 || h <= 0) return;
 
             // Fill entire control surface with dark slate — prevents default white system Control background bleed-through
             using (Brush bgFill = new SolidBrush(Color.FromArgb(18, 19, 24))) {
                 g.FillRectangle(bgFill, 0, 0, w, h);
+            }
+
+            CpuTopology topo = this.topology;
+            if (topo == null && PowerCoreEngine.Instance != null) {
+                topo = PowerCoreEngine.Instance.Topology;
             }
 
             // 1. Top Summary Strip (H = 48)
@@ -67,18 +66,31 @@ namespace VectorPowerHub {
                 }
             }
 
-            // Find peak core
-            int peakCoreIdx = 0;
+            CpuCore peakCore = null;
+            CpuCluster peakCluster = null;
             double peakGhz = 0.0;
-            double pSum = 0;
-            double eSum = 0;
-            for (int i = 0; i < 24; i++) {
-                if (coreGhz[i] > peakGhz) { peakGhz = coreGhz[i]; peakCoreIdx = i; }
-                if (i < 8) pSum += coreGhz[i];
-                else eSum += coreGhz[i];
+            CpuCluster pCluster = null;
+            CpuCluster eCluster = null;
+
+            if (topo != null && topo.Clusters != null) {
+                for (int c = 0; c < topo.Clusters.Count; c++) {
+                    CpuCluster cluster = topo.Clusters[c];
+                    if (cluster == null || cluster.Cores == null) continue;
+                    if (cluster.EfficiencyClass > 0 && pCluster == null) pCluster = cluster;
+                    else if (cluster.EfficiencyClass == 0 && eCluster == null) eCluster = cluster;
+
+                    for (int k = 0; k < cluster.Cores.Count; k++) {
+                        CpuCore core = cluster.Cores[k];
+                        if (core.CurrentGhz > peakGhz) {
+                            peakGhz = core.CurrentGhz;
+                            peakCore = core;
+                            peakCluster = cluster;
+                        }
+                    }
+                }
             }
-            double avgPGhz = pSum / 8.0;
-            double avgEGhz = eSum / 16.0;
+            if (pCluster == null && topo != null && topo.Clusters != null && topo.Clusters.Count > 0) pCluster = topo.Clusters[0];
+            if (eCluster == null && topo != null && topo.Clusters != null && topo.Clusters.Count > 1) eCluster = topo.Clusters[1];
 
             int col1X = 14;
             int col2X = (w - 28) / 4 + 14;
@@ -91,22 +103,42 @@ namespace VectorPowerHub {
                 using (Brush bL = new SolidBrush(VectorPowerHubForm.ColorTextDim))
                 using (Brush bV = new SolidBrush(VectorPowerHubForm.ColorAccentGold)) {
                     g.DrawString("⚡ PEAK BURST", fLabel, bL, col1X, 6);
-                    string peakStr = string.Format("{0}-{1} ({2:0.00} GHz)", (peakCoreIdx < 8 ? "P" : "E"), (peakCoreIdx < 8 ? peakCoreIdx : peakCoreIdx - 8), peakGhz);
+                    string peakStr = "N/A";
+                    if (peakCore != null) {
+                        bool isPeakP = (peakCluster != null && peakCluster.EfficiencyClass > 0);
+                        peakStr = string.Format("{0}-{1} ({2:0.00} GHz)", isPeakP ? "P" : "E", peakCore.Id, peakGhz);
+                    }
                     g.DrawString(peakStr, fVal, bV, col1X, 22);
                 }
 
                 // Col 2: P-Core Cluster Avg
                 using (Brush bL = new SolidBrush(VectorPowerHubForm.ColorTextDim))
                 using (Brush bV = new SolidBrush(VectorPowerHubForm.ColorAccentCyan)) {
-                    g.DrawString("◆ P-CORES (8C)", fLabel, bL, col2X, 6);
-                    g.DrawString(string.Format("{0:0.00} GHz Avg", avgPGhz), fVal, bV, col2X, 22);
+                    string lbl = "◆ P-CORES";
+                    string val = "-- GHz Avg";
+                    if (pCluster != null && pCluster.Cores != null && pCluster.Cores.Count > 0) {
+                        double sum = 0;
+                        for (int k = 0; k < pCluster.Cores.Count; k++) sum += pCluster.Cores[k].CurrentGhz;
+                        lbl = string.Format("◆ {0} ({1}C)", (pCluster.EfficiencyClass > 0 ? "P-CORES" : "CORES"), pCluster.Cores.Count);
+                        val = string.Format("{0:0.00} GHz Avg", sum / pCluster.Cores.Count);
+                    }
+                    g.DrawString(lbl, fLabel, bL, col2X, 6);
+                    g.DrawString(val, fVal, bV, col2X, 22);
                 }
 
                 // Col 3: E-Core Cluster Avg
                 using (Brush bL = new SolidBrush(VectorPowerHubForm.ColorTextDim))
                 using (Brush bV = new SolidBrush(VectorPowerHubForm.ColorAccentGold)) {
-                    g.DrawString("✦ E-CORES (16C)", fLabel, bL, col3X, 6);
-                    g.DrawString(string.Format("{0:0.00} GHz Avg", avgEGhz), fVal, bV, col3X, 22);
+                    string lbl = "✦ E-CORES";
+                    string val = "-- GHz Avg";
+                    if (eCluster != null && eCluster.Cores != null && eCluster.Cores.Count > 0) {
+                        double sum = 0;
+                        for (int k = 0; k < eCluster.Cores.Count; k++) sum += eCluster.Cores[k].CurrentGhz;
+                        lbl = string.Format("✦ {0} ({1}C)", (eCluster.EfficiencyClass == 0 ? "E-CORES" : "CLUSTER 2"), eCluster.Cores.Count);
+                        val = string.Format("{0:0.00} GHz Avg", sum / eCluster.Cores.Count);
+                    }
+                    g.DrawString(lbl, fLabel, bL, col3X, 6);
+                    g.DrawString(val, fVal, bV, col3X, 22);
                 }
 
                 // Col 4: RAPL CPU Package Draw
@@ -117,49 +149,55 @@ namespace VectorPowerHub {
                 }
             }
 
-            // 2. Section 1: Performance Cores Cluster (P0 to P7 - 1 Row of 8 Cores)
-            int pSecY = sumH + 8;
-            using (Font fSec = new Font("Segoe UI", 9.5f, FontStyle.Bold)) {
-                using (Brush b = new SolidBrush(VectorPowerHubForm.ColorAccentCyan)) {
-                    g.DrawString("PERFORMANCE CORES — 8 LION COVE CORES (P0 – P7 • UP TO 5.5 GHz PEAK)", fSec, b, 4, pSecY);
+            if (topo == null || topo.Clusters == null || topo.Clusters.Count == 0) return;
+
+            int curY = sumH + 8;
+            for (int c = 0; c < topo.Clusters.Count; c++) {
+                CpuCluster cluster = topo.Clusters[c];
+                if (cluster == null || cluster.Cores == null || cluster.Cores.Count == 0) continue;
+
+                int count = cluster.Cores.Count;
+                bool isPCore = (cluster.EfficiencyClass > 0);
+                Color titleColor = isPCore ? VectorPowerHubForm.ColorAccentCyan : VectorPowerHubForm.ColorAccentGold;
+
+                int firstId = cluster.Cores[0].Id;
+                int lastId = cluster.Cores[count - 1].Id;
+                string rangeStr = isPCore
+                    ? (count == 1 ? string.Format("P{0}", firstId) : string.Format("P{0} – P{1}", firstId, lastId))
+                    : (count == 1 ? string.Format("E{0:00}", firstId) : string.Format("E{0:00} – E{1:00}", firstId, lastId));
+
+                string title = string.Format("{0} — {1} CORES ({2} • UP TO {3:0.0} GHz PEAK)",
+                    cluster.Name.ToUpper(), count, rangeStr, isPCore ? 5.5 : 4.0);
+
+                using (Font fSec = new Font("Segoe UI", 9.5f, FontStyle.Bold))
+                using (Brush bTitle = new SolidBrush(titleColor)) {
+                    g.DrawString(title, fSec, bTitle, 4, curY);
                 }
-            }
 
-            int pCardsTop = pSecY + 20;
-            int pCols = 8;
-            int pGap = 6;
-            int pCardW = (w - (pCols - 1) * pGap) / pCols;
-            int pCardH = 48;
+                int cardsTop = curY + 20;
+                int cols = (count < 8 && count > 0) ? count : ((count == 12) ? 6 : 8);
+                int gap = 6;
+                int cardW = (w - (cols - 1) * gap) / cols;
+                if (cardW <= 0) cardW = 1;
+                int cardH = isPCore ? 48 : 44;
 
-            for (int i = 0; i < 8; i++) {
-                int cx = i * (pCardW + pGap);
-                int cy = pCardsTop;
-                DrawCoreCard(g, cx, cy, pCardW, pCardH, string.Format("P-Core {0}", i), "Lion Cove", coreGhz[i], coreUtil[i], true);
-            }
+                for (int k = 0; k < count; k++) {
+                    CpuCore core = cluster.Cores[k];
+                    int col = k % cols;
+                    int row = k / cols;
+                    int cx = col * (cardW + gap);
+                    int cy = cardsTop + row * (cardH + gap);
 
-            // 3. Section 2: Efficient Cores Cluster (E0 to E15 - 2 Rows of 8 Cores)
-            int eSecY = pCardsTop + pCardH + 8;
-            using (Font fSec = new Font("Segoe UI", 9.5f, FontStyle.Bold)) {
-                using (Brush b = new SolidBrush(VectorPowerHubForm.ColorAccentGold)) {
-                    g.DrawString("EFFICIENT CORES — 16 SKYMONT CORES (E00 – E15 • UP TO 4.0 GHz PEAK)", fSec, b, 4, eSecY);
+                    string coreLabel = isPCore
+                        ? string.Format("P-Core {0}", core.Id)
+                        : string.Format("E{0:00}", core.Id);
+
+                    DrawCoreCard(g, cx, cy, cardW, cardH, coreLabel, cluster.Name, core.CurrentGhz, core.CurrentUtil, isPCore);
                 }
-            }
 
-            int eCardsTop = eSecY + 20;
-            int eCols = 8;
-            int eGap = 6;
-            int eCardW = (w - (eCols - 1) * eGap) / eCols;
-            int eCardH = 44;
-
-            for (int i = 0; i < 16; i++) {
-                int col = i % eCols;
-                int row = i / eCols;
-                int cx = col * (eCardW + eGap);
-                int cy = eCardsTop + row * (eCardH + eGap);
-                DrawCoreCard(g, cx, cy, eCardW, eCardH, string.Format("E{0:00}", i), "Skymont", coreGhz[8 + i], coreUtil[8 + i], false);
+                int rows = (count + cols - 1) / cols;
+                curY = cardsTop + rows * cardH + (rows - 1) * gap + 10;
             }
         }
-
-
     }
-}
+}

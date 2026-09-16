@@ -64,7 +64,7 @@ namespace VectorPowerHub {
                 new string[] {
                     "• GPU Clamped: 2100 MHz (~100W)",
                     "• Boost Mode 3 (Efficient Enabled)",
-                    "• EPP: 20% (Max Draw Latency)",
+                    "• EPP: 65% (Relaxed Ramp / Silent)",
                     "• Sub-74°C Sustained GPU Temp",
                     "• Ultra-Quiet Acoustic Profile",
                     "• Perfect for stealth sessions"
