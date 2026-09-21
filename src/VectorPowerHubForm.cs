@@ -19,6 +19,11 @@ namespace VectorPowerHub {
         private System.Windows.Forms.Timer telemetryTimer;
         public HubTelemetrySnapshot currentSnapshot = new HubTelemetrySnapshot();
 
+        // System Specs
+        public static string sysModel = "MSI Vector";
+        public static string sysCpu = "Intel Processor";
+        public static string sysGpu = "NVIDIA GPU";
+
         // System Tray
         private NotifyIcon trayIcon;
         private ContextMenu trayMenu;

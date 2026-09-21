@@ -15,13 +15,14 @@ namespace VectorPowerHub {
     public partial class VectorPowerHubForm : Form {
         public static bool IsRunAtStartupEnabled() {
             try {
-                using (RegistryKey key = Registry.CurrentUser.OpenSubKey(RunRegistryKey, false)) {
-                    if (key != null) {
-                        object val = key.GetValue(RunValueName);
-                        if (val != null) {
-                            return true;
-                        }
-                    }
+                ProcessStartInfo psi = new ProcessStartInfo("schtasks", "/query /tn \"VectorPowerHub_Startup\"");
+                psi.CreateNoWindow = true;
+                psi.UseShellExecute = false;
+                psi.RedirectStandardOutput = true;
+                using (Process p = Process.Start(psi)) {
+                    string outStr = p.StandardOutput.ReadToEnd();
+                    p.WaitForExit(1000);
+                    return outStr.Contains("VectorPowerHub_Startup");
                 }
             } catch { }
             return false;
@@ -29,20 +30,21 @@ namespace VectorPowerHub {
 
         public static void SetRunAtStartup(bool enable) {
             try {
-                using (RegistryKey key = Registry.CurrentUser.OpenSubKey(RunRegistryKey, true)) {
-                    if (key != null) {
-                        if (enable) {
-                            string exePath = Application.ExecutablePath;
-                            if (string.IsNullOrEmpty(exePath) || exePath.IndexOf("powershell", StringComparison.OrdinalIgnoreCase) >= 0 || !File.Exists(exePath)) {
-                                if (File.Exists(@"C:\Users\a7god\VectorPowerHub.exe")) {
-                                    exePath = @"C:\Users\a7god\VectorPowerHub.exe";
-                                }
-                            }
-                            key.SetValue(RunValueName, string.Format("\"{0}\" /minimized", exePath));
-                        } else {
-                            key.DeleteValue(RunValueName, false);
-                        }
+                if (enable) {
+                    string exePath = Application.ExecutablePath;
+                    if (string.IsNullOrEmpty(exePath) || exePath.IndexOf("powershell", StringComparison.OrdinalIgnoreCase) >= 0 || !File.Exists(exePath)) {
+                        exePath = @"C:\Users\a7god\VectorPowerHub.exe";
                     }
+                    string args = string.Format("/create /tn \"VectorPowerHub_Startup\" /tr \"\\\"{0}\\\" /minimized\" /sc onlogon /rl highest /f", exePath);
+                    ProcessStartInfo psi = new ProcessStartInfo("schtasks", args);
+                    psi.CreateNoWindow = true;
+                    psi.UseShellExecute = false;
+                    Process.Start(psi).WaitForExit(2000);
+                } else {
+                    ProcessStartInfo psi = new ProcessStartInfo("schtasks", "/delete /tn \"VectorPowerHub_Startup\" /f");
+                    psi.CreateNoWindow = true;
+                    psi.UseShellExecute = false;
+                    Process.Start(psi).WaitForExit(2000);
                 }
             } catch { }
         }

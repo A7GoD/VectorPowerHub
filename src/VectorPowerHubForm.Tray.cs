@@ -19,7 +19,7 @@ namespace VectorPowerHub {
         private void InitializeSystemTray() {
             trayMenu = new ContextMenu();
 
-            MenuItem mHeader = new MenuItem("Vector Power Hub - MSI Vector 16 HX");
+            MenuItem mHeader = new MenuItem("Vector Power Hub - " + sysModel);
             mHeader.Enabled = false;
             trayMenu.MenuItems.Add(mHeader);
             trayMenu.MenuItems.Add(new MenuItem("-"));

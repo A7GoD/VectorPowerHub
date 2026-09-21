@@ -18,13 +18,29 @@ namespace VectorPowerHub {
         public VectorPowerHubForm(int initialTab = 0, bool startMinimized = false) {
             try { SetProcessDPIAware(); } catch { }
 
+            try {
+                object mod = Registry.GetValue(@"HKEY_LOCAL_MACHINE\HARDWARE\DESCRIPTION\System\BIOS", "SystemProductName", null);
+                if (mod != null) sysModel = mod.ToString();
+                object proc = Registry.GetValue(@"HKEY_LOCAL_MACHINE\HARDWARE\DESCRIPTION\System\CentralProcessor\0", "ProcessorNameString", null);
+                if (proc != null) {
+                    string s = proc.ToString().Replace("Intel(R) Core(TM) ", "").Replace("Intel(R) ", "").Trim();
+                    sysCpu = s;
+                }
+                object gpu0 = Registry.GetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0000", "DriverDesc", null);
+                object gpu1 = Registry.GetValue(@"HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}\0001", "DriverDesc", null);
+                string g0 = gpu0 != null ? gpu0.ToString() : "";
+                string g1 = gpu1 != null ? gpu1.ToString() : "";
+                string realGpu = g1.Contains("NVIDIA") ? g1 : (g0.Contains("NVIDIA") ? g0 : (g1 != "" ? g1 : g0));
+                if (!string.IsNullOrEmpty(realGpu)) sysGpu = realGpu.Replace("NVIDIA GeForce ", "").Replace(" Laptop GPU", "");
+            } catch { }
+
             this.startMinimizedToTray = startMinimized;
             if (startMinimized) {
                 this.WindowState = FormWindowState.Minimized;
                 this.ShowInTaskbar = false;
             }
 
-            this.Text = "Vector Power Hub - MSI Vector 16 HX";
+            this.Text = "Vector Power Hub - " + sysModel;
             try { this.Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath); } catch { }
             this.FormBorderStyle = FormBorderStyle.None;
             this.StartPosition = FormStartPosition.CenterScreen;
@@ -41,6 +57,7 @@ namespace VectorPowerHub {
 
             // Build GUI Layout
             InitializeInterface();
+            InitializeScriptEditor();
 
             InitializeSystemTray();
 
@@ -69,6 +86,13 @@ namespace VectorPowerHub {
 
             // Initial responsive layout pass
             PerformResponsiveLayout();
+
+            // Force apply default standby settings on startup
+            SelectDesktopProfile(currentSelectedDesktopProfile ?? "desktop");
+            SelectProfile(currentSelectedGamingProfile ?? "snappy");
+            
+            // Apply OS Power Optimizations on boot
+            RunOsScript();
 
             // Switch to requested initial tab if non-zero
             if (initialTab > 0) {

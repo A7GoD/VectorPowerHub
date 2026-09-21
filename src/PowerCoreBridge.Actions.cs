@@ -97,6 +97,9 @@ namespace VectorPowerHub {
                 RunCmd(string.Format("powercfg /setdcvalueindex {0} SUB_PROCESSOR be337238-0d82-4146-a960-4f3749d470c7 {1}", s, boostMode));
                 RunCmd(string.Format("powercfg /setacvalueindex {0} SUB_PROCESSOR 36687f9e-e3a5-4dbf-b1dc-15eb381c6863 {1}", s, epp));
                 RunCmd(string.Format("powercfg /setdcvalueindex {0} SUB_PROCESSOR 36687f9e-e3a5-4dbf-b1dc-15eb381c6863 {1}", s, epp));
+                
+                // Enforce Maximum Power Saving (Index 3) for Wi-Fi on DC
+                RunCmd(string.Format("powercfg /setdcvalueindex {0} 19cbb8fa-5279-450e-9fac-8a3d5fedd0c1 12bbebe6-58d6-4636-95bb-3217ef867c1a 3", s));
             }
             RunCmd("powercfg /setactive 381b4222-f694-41f0-9685-ff5bb260df2e");
 

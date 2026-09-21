@@ -25,13 +25,22 @@ namespace VectorPowerHub {
             btnApplyCustom.Click += (s, e) => ApplyCustomTunerValues();
 
             btnCloseTuner = new GlowButton();
-            btnCloseTuner.Text = "✕ Close";
+            btnCloseTuner.Text = "  Close";
             btnCloseTuner.Location = new Point(260, 350);
             btnCloseTuner.Size = new Size(110, 38);
             btnCloseTuner.ButtonColor = ColorCardBg;
             btnCloseTuner.BorderColor = ColorBorder;
             btnCloseTuner.TextColor = ColorTextMuted;
             btnCloseTuner.Click += (s, e) => ToggleCustomTuner();
+
+            btnOpenScriptEditor = new GlowButton();
+            btnOpenScriptEditor.Text = "Edit OS Script...";
+            btnOpenScriptEditor.Location = new Point(390, 350);
+            btnOpenScriptEditor.Size = new Size(160, 38);
+            btnOpenScriptEditor.ButtonColor = ColorCardBg;
+            btnOpenScriptEditor.BorderColor = ColorBorder;
+            btnOpenScriptEditor.TextColor = ColorTextMuted;
+            btnOpenScriptEditor.Click += (s, e) => ToggleScriptEditor();
 
             // Row 5: Startup & Hint (Gap of 16px!)
             chkRunAtStartup = new CheckBox();
@@ -68,6 +77,7 @@ namespace VectorPowerHub {
             panelCustomTuner.Controls.Add(trackGpuClock);
             panelCustomTuner.Controls.Add(btnApplyCustom);
             panelCustomTuner.Controls.Add(btnCloseTuner);
+            panelCustomTuner.Controls.Add(btnOpenScriptEditor);
             panelCustomTuner.Controls.Add(chkRunAtStartup);
             panelCustomTuner.Controls.Add(lblCustomTunerHint);
 

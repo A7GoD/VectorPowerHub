@@ -28,7 +28,7 @@ namespace VectorPowerHub {
                 lblHeader.AutoSize = true;
 
                 Label lblDesc = new Label();
-                lblDesc.Text = "Specify maximum combined CPU + GPU platform power ceiling in Watts (e.g., 215W for MSI Vector 16 HX i9-14900HX + RTX 4080):";
+                lblDesc.Text = string.Format("Specify maximum combined CPU + GPU platform power ceiling in Watts (e.g., 215W for {0} {1} + {2}):", sysModel, sysCpu, sysGpu);
                 lblDesc.Font = new Font("Segoe UI", 8.5f, FontStyle.Regular);
                 lblDesc.ForeColor = ColorTextMuted;
                 lblDesc.Location = new Point(20, 38);

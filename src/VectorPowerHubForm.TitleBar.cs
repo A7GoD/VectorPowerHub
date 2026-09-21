@@ -46,7 +46,7 @@ namespace VectorPowerHub {
             };
 
             lblSubtitle = new Label();
-            lblSubtitle.Text = "MSI VECTOR 16 HX • 275HX × RTX 5070 MOBILE";
+            lblSubtitle.Text = string.Format("{0}   {1} x {2}", sysModel.ToUpper(), sysCpu.ToUpper(), sysGpu.ToUpper());
             lblSubtitle.Font = new Font("Segoe UI", 8.25f, FontStyle.Bold);
             lblSubtitle.ForeColor = ColorTextDim;
             lblSubtitle.AutoSize = true;
