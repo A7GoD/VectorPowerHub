@@ -118,15 +118,25 @@ namespace VectorPowerHub {
                 }
             }
             bool createdNew = false;
-            using (Mutex appMutex = new Mutex(true, "VectorPowerHub_SingleInstance_Mutex", out createdNew)) {
+            using (Mutex appMutex = new Mutex(true, "VectorPowerHub_SingleInstance_Mutex_v2", out createdNew)) {
                 if (!createdNew) {
                     if (args != null && args.Length > 0 && (args[0] == "/test" || args[0] == "--test")) {
                         return;
                     }
                     // Another instance is already running!
-                    if (!startMinimized) {
+                    bool isAutomatedStartup = false;
+                    if (args != null && args.Length > 0) {
+                        for (int i = 0; i < args.Length; i++) {
+                            string a = args[i].ToLowerInvariant();
+                            if (a == "/minimized" || a == "--minimized" || a == "/tray" || a == "--tray" || a == "/startup" || a == "--startup") {
+                                isAutomatedStartup = true;
+                            }
+                        }
+                    }
+
+                    if (!isAutomatedStartup) {
                         try {
-                            using (EventWaitHandle wakeEvent = EventWaitHandle.OpenExisting("VectorPowerHub_WakeEvent")) {
+                            using (EventWaitHandle wakeEvent = EventWaitHandle.OpenExisting("VectorPowerHub_WakeEvent_v2")) {
                                 wakeEvent.Set();
                             }
                         } catch { }

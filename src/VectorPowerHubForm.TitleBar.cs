@@ -66,13 +66,25 @@ namespace VectorPowerHub {
 
             btnTrayMin = CreateTitleButton("▼", 0, 8, (s, e) => MinimizeToTray());
             btnMin = CreateTitleButton("—", 0, 8, (s, e) => { this.WindowState = FormWindowState.Minimized; });
-            btnMax = CreateTitleButton("◻", 0, 8, (s, e) => ToggleMaximize());
+            btnMax = CreateTitleButton("□", 0, 8, (s, e) => ToggleMaximize());
             btnClose = CreateTitleButton("✕", 0, 8, (s, e) => ExitApplication());
             btnClose.FlatAppearance.MouseOverBackColor = ColorAccentRed;
+
+            btnTrends = CreateTitleButton("📈", 0, 8, (s, e) => {
+                if (graphForm == null || graphForm.IsDisposed) {
+                    graphForm = new VectorPowerHubGraphForm();
+                    graphForm.Show();
+                } else {
+                    graphForm.BringToFront();
+                }
+            });
+            btnTrends.Font = new Font("Segoe UI Emoji", 10f);
+            btnTrends.Width = 40;
 
             panelTitle.Controls.Add(lblTitle);
             panelTitle.Controls.Add(lblSubtitle);
             panelTitle.Controls.Add(lblProfileBadge);
+            panelTitle.Controls.Add(btnTrends);
             panelTitle.Controls.Add(btnTrayMin);
             panelTitle.Controls.Add(btnMin);
             panelTitle.Controls.Add(btnMax);

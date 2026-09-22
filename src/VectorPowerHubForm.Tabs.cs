@@ -70,9 +70,41 @@ namespace VectorPowerHub {
             btnTabTopology.TextColor = ColorTextMuted;
             btnTabTopology.Click += (s, e) => SwitchTab(2);
 
+            btnTabOptimizations = new GlowButton();
+            btnTabOptimizations.Text = "[≡] OS TWEAKS";
+            btnTabOptimizations.Location = new Point(590, 2);
+            btnTabOptimizations.Size = new Size(150, 36);
+            btnTabOptimizations.ButtonColor = ColorTabInactiveBg;
+            btnTabOptimizations.BorderColor = ColorBorder;
+            btnTabOptimizations.TextColor = ColorTextMuted;
+            btnTabOptimizations.Click += (s, e) => {
+                if (optimForm == null || optimForm.IsDisposed) {
+                    optimForm = new VectorPowerHubOsOptimizationsForm();
+                    optimForm.Show();
+                } else {
+                    optimForm.BringToFront();
+                }
+            };
+
+            btnTabTrends = new GlowButton();
+            btnTabTrends.Text = "[📈] LIVE TRENDS";
+            btnTabTrends.Location = new Point(750, 2);
+            btnTabTrends.Size = new Size(130, 36);
+            btnTabTrends.ButtonColor = ColorTabInactiveBg;
+            btnTabTrends.BorderColor = ColorBorder;
+            btnTabTrends.TextColor = ColorTextMuted;
+            btnTabTrends.Click += (s, e) => {
+                if (graphForm == null || graphForm.IsDisposed) {
+                    graphForm = new VectorPowerHubGraphForm();
+                    graphForm.Show();
+                } else {
+                    graphForm.BringToFront();
+                }
+            };
+
             btnToggleAutoSwitch = new GlowButton();
-            btnToggleAutoSwitch.Text = "⚡ AUTO-PROFILES: ON (GAME SYNC)";
-            btnToggleAutoSwitch.Size = new Size(270, 36);
+            btnToggleAutoSwitch.Text = "⚡ AUTO-SYNC: ON";
+            btnToggleAutoSwitch.Size = new Size(200, 36);
             btnToggleAutoSwitch.ButtonColor = Color.FromArgb(14, 38, 26);
             btnToggleAutoSwitch.BorderColor = ColorAccentGreen;
             btnToggleAutoSwitch.TextColor = ColorAccentGreen;
@@ -81,6 +113,8 @@ namespace VectorPowerHub {
             panelTabStrip.Controls.Add(btnTabProfiles);
             panelTabStrip.Controls.Add(btnTabBenchmark);
             panelTabStrip.Controls.Add(btnTabTopology);
+            panelTabStrip.Controls.Add(btnTabOptimizations);
+            panelTabStrip.Controls.Add(btnTabTrends);
             panelTabStrip.Controls.Add(btnToggleAutoSwitch);
             this.Controls.Add(panelTabStrip);
 

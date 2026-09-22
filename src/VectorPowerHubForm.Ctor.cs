@@ -45,7 +45,7 @@ namespace VectorPowerHub {
             this.FormBorderStyle = FormBorderStyle.None;
             this.StartPosition = FormStartPosition.CenterScreen;
             this.Size = new Size(1160, 800);
-            this.MinimumSize = new Size(1080, 720);
+            this.MinimumSize = new Size(1120, 720);
             this.BackColor = ColorBgMain;
             this.ForeColor = ColorTextWhite;
             this.DoubleBuffered = true;
@@ -57,13 +57,12 @@ namespace VectorPowerHub {
 
             // Build GUI Layout
             InitializeInterface();
-            InitializeScriptEditor();
 
             InitializeSystemTray();
 
             // Setup Single-Instance Wake Listener
             try {
-                singleInstanceWakeEvent = new EventWaitHandle(false, EventResetMode.AutoReset, "VectorPowerHub_WakeEvent");
+                singleInstanceWakeEvent = new EventWaitHandle(false, EventResetMode.AutoReset, "VectorPowerHub_WakeEvent_v2");
                 wakeListenerThread = new Thread(WakeListenerLoop);
                 wakeListenerThread.IsBackground = true;
                 wakeListenerThread.Name = "VectorPowerHub_WakeListener";
@@ -92,7 +91,7 @@ namespace VectorPowerHub {
             SelectProfile(currentSelectedGamingProfile ?? "snappy");
             
             // Apply OS Power Optimizations on boot
-            RunOsScript();
+            OsOptimizationsManager.ApplyAll();
 
             // Switch to requested initial tab if non-zero
             if (initialTab > 0) {
@@ -181,4 +180,5 @@ namespace VectorPowerHub {
         // -----------------------------------------------------------------------------------------
 
     }
-}
+}
+

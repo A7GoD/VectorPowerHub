@@ -34,6 +34,7 @@ public partial class PowerCoreEngine : IDisposable {
                 int totalCores = (this.Topology != null && this.Topology.TotalCores > 0) ? this.Topology.TotalCores : Environment.ProcessorCount;
                 _hPdhCounterPerCore = new IntPtr[totalCores];
                 _hPdhCounterPerCoreUtil = new IntPtr[totalCores];
+                _hPdhCounterPerCoreParked = new IntPtr[totalCores];
 
                 int coreIdx = 0;
                 if (this.Topology != null && this.Topology.Clusters != null) {
@@ -45,6 +46,7 @@ public partial class PowerCoreEngine : IDisposable {
                             CpuCore core = cluster.Cores[k];
                             PdhNative.PdhAddEnglishCounterW(_hPdhQuery, string.Format(@"\Processor Information(0,{0})\% Processor Performance", core.Id), IntPtr.Zero, out _hPdhCounterPerCore[coreIdx]);
                             PdhNative.PdhAddEnglishCounterW(_hPdhQuery, string.Format(@"\Processor Information(0,{0})\% Processor Utility", core.Id), IntPtr.Zero, out _hPdhCounterPerCoreUtil[coreIdx]);
+                            PdhNative.PdhAddEnglishCounterW(_hPdhQuery, string.Format(@"\Processor Information(0,{0})\Parking Status", core.Id), IntPtr.Zero, out _hPdhCounterPerCoreParked[coreIdx]);
                             coreIdx++;
                         }
                     }
@@ -53,6 +55,7 @@ public partial class PowerCoreEngine : IDisposable {
                 while (coreIdx < totalCores) {
                     PdhNative.PdhAddEnglishCounterW(_hPdhQuery, string.Format(@"\Processor Information(0,{0})\% Processor Performance", coreIdx), IntPtr.Zero, out _hPdhCounterPerCore[coreIdx]);
                     PdhNative.PdhAddEnglishCounterW(_hPdhQuery, string.Format(@"\Processor Information(0,{0})\% Processor Utility", coreIdx), IntPtr.Zero, out _hPdhCounterPerCoreUtil[coreIdx]);
+                    PdhNative.PdhAddEnglishCounterW(_hPdhQuery, string.Format(@"\Processor Information(0,{0})\Parking Status", coreIdx), IntPtr.Zero, out _hPdhCounterPerCoreParked[coreIdx]);
                     coreIdx++;
                 }
 
@@ -122,6 +125,13 @@ public partial class PowerCoreEngine : IDisposable {
                                     u = val.doubleValue;
                                     if (u < 0.0) u = 0.0;
                                     if (u > 100.0) u = 100.0;
+                                }
+                            }
+
+                            if (_hPdhCounterPerCoreParked != null && idx < _hPdhCounterPerCoreParked.Length && _hPdhCounterPerCoreParked[idx] != IntPtr.Zero) {
+                                PdhNative.PDH_FMT_COUNTERVALUE_DOUBLE val;
+                                if (PdhNative.PdhGetFormattedCounterValue(_hPdhCounterPerCoreParked[idx], PdhNative.PDH_FMT_DOUBLE, IntPtr.Zero, out val) == 0) {
+                                    core.IsParked = (val.doubleValue > 0.0);
                                 }
                             }
 

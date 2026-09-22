@@ -62,6 +62,7 @@ public partial class PowerCoreEngine : IDisposable {
     private IntPtr _hPdhCounterECore;
     private IntPtr[] _hPdhCounterPerCore = new IntPtr[24];
     private IntPtr[] _hPdhCounterPerCoreUtil = new IntPtr[24];
+    private IntPtr[] _hPdhCounterPerCoreParked = new IntPtr[24];
     private bool _isPdhInitialized;
 
     // NVML Device Handle

@@ -20,7 +20,7 @@ namespace VectorPowerHub {
         public HubTelemetrySnapshot currentSnapshot = new HubTelemetrySnapshot();
 
         // System Specs
-        public static string sysModel = "MSI Vector";
+        public static string sysModel = "PC System";
         public static string sysCpu = "Intel Processor";
         public static string sysGpu = "NVIDIA GPU";
 
@@ -48,6 +48,7 @@ namespace VectorPowerHub {
         private Button btnMin;
         private Button btnMax;
         private Button btnClose;
+        private Button btnTrends;
 
         // HUD Cards (Self-Painting Controls - Monospace Consolas figures)
         private FpsHeroCard cardFps;
@@ -60,6 +61,8 @@ namespace VectorPowerHub {
         private GlowButton btnTabProfiles;
         private GlowButton btnTabBenchmark;
         private GlowButton btnTabTopology;
+        private GlowButton btnTabOptimizations;
+        private GlowButton btnTabTrends;
         private GlowButton btnToggleAutoSwitch;
         private int currentTabIndex = 0; // 0 = Profiles, 1 = Benchmark, 2 = Per-Core Topology
 
@@ -147,6 +150,9 @@ namespace VectorPowerHub {
         private Label lblCustomTunerHint;
         private bool startMinimizedToTray = false;
         private bool hasShownOnce = false;
+
+        private VectorPowerHubGraphForm graphForm = null;
+        private VectorPowerHubOsOptimizationsForm optimForm = null;
 
         // -----------------------------------------------------------------------------------------
 

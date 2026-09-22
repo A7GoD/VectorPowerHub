@@ -30,6 +30,10 @@ namespace VectorPowerHub {
                 HubTelemetrySnapshot snap = bridge.GetSnapshot();
                 currentSnapshot = snap;
 
+                if (graphForm != null && !graphForm.IsDisposed) {
+                    graphForm.AddSnapshot(snap);
+                }
+
                 // Auto-Detect Platform Power Ceiling with 3-tick outlier rejection
                 if (PowerCoreEngine.Instance != null && PowerCoreEngine.Instance.AutoPowerCeiling && snap != null) {
                     _platformPowerHistory.Enqueue(snap.TotalPlatformPowerW);

@@ -177,7 +177,9 @@ namespace VectorPowerHub {
                 int cardsTop = curY + 20;
                 int cols = (count < 8 && count > 0) ? count : ((count == 12) ? 6 : 8);
                 int gap = 6;
-                int cardW = (w - (cols - 1) * gap) / cols;
+                int numGroupGaps = (!isPCore && cols >= 8) ? (cols / 4 - 1) : 0;
+                int groupGapWidth = 12;
+                int cardW = (w - (cols - 1) * gap - (numGroupGaps * groupGapWidth)) / cols;
                 if (cardW <= 0) cardW = 1;
                 int cardH = isPCore ? 48 : 44;
 
@@ -185,14 +187,15 @@ namespace VectorPowerHub {
                     CpuCore core = cluster.Cores[k];
                     int col = k % cols;
                     int row = k / cols;
-                    int cx = col * (cardW + gap);
+                    int addedGroupGaps = (!isPCore && cols >= 8) ? (col / 4) : 0;
+                    int cx = col * (cardW + gap) + (addedGroupGaps * groupGapWidth);
                     int cy = cardsTop + row * (cardH + gap);
 
                     string coreLabel = isPCore
                         ? string.Format("P-Core {0}", core.Id)
                         : string.Format("E{0:00}", core.Id);
 
-                    DrawCoreCard(g, cx, cy, cardW, cardH, coreLabel, cluster.Name, core.CurrentGhz, core.CurrentUtil, isPCore);
+                    DrawCoreCard(g, cx, cy, cardW, cardH, coreLabel, cluster.Name, core.CurrentGhz, core.CurrentUtil, isPCore, core.IsParked);
                 }
 
                 int rows = (count + cols - 1) / cols;

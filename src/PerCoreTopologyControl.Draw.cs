@@ -13,11 +13,13 @@ using Microsoft.Win32;
 
 namespace VectorPowerHub {
     public partial class PerCoreTopologyControl : Control {
-        private void DrawCoreCard(Graphics g, int x, int y, int w, int h, string name, string arch, double ghz, double util, bool isPCore) {
+        private void DrawCoreCard(Graphics g, int x, int y, int w, int h, string name, string arch, double ghz, double util, bool isPCore, bool isParked) {
+            if (isParked) ghz = 0.00;
             Rectangle rect = new Rectangle(x, y, w - 1, h - 1);
-            Color fill = Color.FromArgb(24, 27, 35);
+            Color fill = isParked ? Color.FromArgb(16, 18, 24) : Color.FromArgb(24, 27, 35);
             Color border = isPCore ? Color.FromArgb(45, 60, 80) : Color.FromArgb(45, 45, 55);
-            Color accent = isPCore ? VectorPowerHubForm.ColorAccentCyan : VectorPowerHubForm.ColorAccentGold;
+            Color accent = isParked ? Color.FromArgb(80, 80, 90) : (isPCore ? VectorPowerHubForm.ColorAccentCyan : VectorPowerHubForm.ColorAccentGold);
+            if (isParked) border = Color.FromArgb(30, 30, 40);
 
             using (GraphicsPath path = DarkCardPanel.GetRoundedPath(rect, 4)) {
                 using (Brush b = new SolidBrush(fill)) {
@@ -35,8 +37,16 @@ namespace VectorPowerHub {
 
             // Header Name
             using (Font fName = new Font("Segoe UI", isPCore ? 8.25f : 8f, FontStyle.Bold)) {
-                using (Brush b = new SolidBrush(VectorPowerHubForm.ColorTextMuted)) {
+                using (Brush b = new SolidBrush(isParked ? Color.FromArgb(100, 100, 110) : VectorPowerHubForm.ColorTextMuted)) {
                     g.DrawString(name, fName, b, x + 7, y + 4);
+                }
+            }
+            
+            if (isParked) {
+                using (Font fZz = new Font("Segoe UI", 8f, FontStyle.Bold)) {
+                    using (Brush b = new SolidBrush(Color.FromArgb(90, 90, 110))) {
+                        g.DrawString("Zz", fZz, b, x + w - 24, y + 4);
+                    }
                 }
             }
 
@@ -45,6 +55,9 @@ namespace VectorPowerHub {
                 Color ghzColor = isPCore
                     ? (ghz >= 4.8 ? VectorPowerHubForm.ColorAccentCyan : VectorPowerHubForm.ColorTextWhite)
                     : (ghz >= 3.6 ? VectorPowerHubForm.ColorAccentGold : VectorPowerHubForm.ColorTextWhite);
+                
+                if (isParked) ghzColor = Color.FromArgb(90, 90, 100);
+
                 using (Brush b = new SolidBrush(ghzColor)) {
                     g.DrawString(string.Format("{0:0.00} GHz", ghz), fGhz, b, x + 7, y + 18);
                 }

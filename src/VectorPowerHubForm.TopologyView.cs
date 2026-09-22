@@ -35,7 +35,7 @@ namespace VectorPowerHub {
             // 2. Expandable Tuning Drawer Panel (Hidden by default)
             panelTopologyTuningDrawer = new Panel();
             panelTopologyTuningDrawer.Location = new Point(0, 36);
-            panelTopologyTuningDrawer.Height = 160;
+            panelTopologyTuningDrawer.Height = 190;
             panelTopologyTuningDrawer.BackColor = Color.FromArgb(20, 23, 31);
             panelTopologyTuningDrawer.BorderStyle = BorderStyle.FixedSingle;
             panelTopologyTuningDrawer.Visible = false;
@@ -54,8 +54,8 @@ namespace VectorPowerHub {
             trackDrawerPcore.Value = 55;
             trackDrawerPcore.TickFrequency = 2;
             trackDrawerPcore.BackColor = Color.FromArgb(20, 23, 31);
-            trackDrawerPcore.Location = new Point(14, 24);
-            trackDrawerPcore.Size = new Size(290, 32);
+            trackDrawerPcore.Location = new Point(14, 30);
+            trackDrawerPcore.Size = new Size(290, 45);
             trackDrawerPcore.ValueChanged += (s, e) => {
                 lblDrawerPcoreVal.Text = (trackDrawerPcore.Value == 55)
                     ? "P-Core Turbo: Unbounded (Up to 5.5 GHz)"
@@ -75,8 +75,8 @@ namespace VectorPowerHub {
             trackDrawerEcore.Value = 28;
             trackDrawerEcore.TickFrequency = 2;
             trackDrawerEcore.BackColor = Color.FromArgb(20, 23, 31);
-            trackDrawerEcore.Location = new Point(326, 24);
-            trackDrawerEcore.Size = new Size(290, 32);
+            trackDrawerEcore.Location = new Point(326, 30);
+            trackDrawerEcore.Size = new Size(290, 45);
             trackDrawerEcore.ValueChanged += (s, e) => {
                 lblDrawerEcoreVal.Text = string.Format("E-Core Turbo: {0:0.0} GHz ({1}00 MHz)", trackDrawerEcore.Value / 10.0, trackDrawerEcore.Value);
             };
@@ -94,8 +94,8 @@ namespace VectorPowerHub {
             trackDrawerEpp.Value = 30;
             trackDrawerEpp.TickFrequency = 10;
             trackDrawerEpp.BackColor = Color.FromArgb(20, 23, 31);
-            trackDrawerEpp.Location = new Point(630, 24);
-            trackDrawerEpp.Size = new Size(280, 32);
+            trackDrawerEpp.Location = new Point(630, 30);
+            trackDrawerEpp.Size = new Size(280, 45);
             trackDrawerEpp.ValueChanged += (s, e) => {
                 lblDrawerEppVal.Text = string.Format("EPP Policy: {0}% (Energy Perf Preference)", trackDrawerEpp.Value);
             };
@@ -105,7 +105,7 @@ namespace VectorPowerHub {
             lblDrawerBoostVal.Text = "Intel Boost Mode:";
             lblDrawerBoostVal.Font = new Font("Segoe UI", 9f, FontStyle.Bold);
             lblDrawerBoostVal.ForeColor = ColorAccentGold;
-            lblDrawerBoostVal.Location = new Point(14, 82);
+            lblDrawerBoostVal.Location = new Point(14, 95);
             lblDrawerBoostVal.AutoSize = true;
 
             comboDrawerBoost = new ComboBox();
@@ -123,14 +123,14 @@ namespace VectorPowerHub {
                 "6 - Efficient Guaranteed (Aggressive At Guaranteed)"
             });
             comboDrawerBoost.SelectedIndex = 4;
-            comboDrawerBoost.Location = new Point(14, 102);
+            comboDrawerBoost.Location = new Point(14, 120);
             comboDrawerBoost.Size = new Size(290, 22);
 
             lblDrawerGpuVal = new Label();
             lblDrawerGpuVal.Text = "RTX 5070 Mobile Max Clock: Stock / Unconstrained";
             lblDrawerGpuVal.Font = new Font("Segoe UI", 9f, FontStyle.Bold);
             lblDrawerGpuVal.ForeColor = ColorAccentCyan;
-            lblDrawerGpuVal.Location = new Point(326, 82);
+            lblDrawerGpuVal.Location = new Point(326, 95);
             lblDrawerGpuVal.AutoSize = true;
 
             trackDrawerGpu = new TrackBar();
@@ -139,8 +139,8 @@ namespace VectorPowerHub {
             trackDrawerGpu.Value = 26;
             trackDrawerGpu.TickFrequency = 1;
             trackDrawerGpu.BackColor = Color.FromArgb(20, 23, 31);
-            trackDrawerGpu.Location = new Point(326, 100);
-            trackDrawerGpu.Size = new Size(330, 32);
+            trackDrawerGpu.Location = new Point(326, 120);
+            trackDrawerGpu.Size = new Size(330, 45);
             trackDrawerGpu.ValueChanged += (s, e) => {
                 lblDrawerGpuVal.Text = (trackDrawerGpu.Value == 26)
                     ? "RTX 5070 Mobile Max Clock: Stock / Unconstrained"
@@ -149,7 +149,7 @@ namespace VectorPowerHub {
 
             btnDrawerApply = new GlowButton();
             btnDrawerApply.Text = "✔ Apply Custom Hardware Tuning";
-            btnDrawerApply.Location = new Point(680, 100);
+            btnDrawerApply.Location = new Point(680, 115);
             btnDrawerApply.Size = new Size(260, 32);
             btnDrawerApply.ButtonColor = Color.FromArgb(24, 44, 32);
             btnDrawerApply.BorderColor = ColorAccentGreen;

@@ -155,8 +155,8 @@ Complete`tcmp_README_md
 Shortcut`tDirectory_`tName`tComponent_`tTarget`tArguments`tDescription`tHotkey`tIcon_`tIconIndex`tShowCmd`tWkDir
 s72`ts72`tl128`ts72`ts72`tS255`tL255`tI2`tS72`tI2`tI2`tS72
 Shortcut`tShortcut
-sc_StartMenu`tProgramMenuFolder`tVECT~1|Vector Power Hub`tcmp_VectorPowerHub_exe`t[#VectorPowerHub.exe]`t`tMSI Vector GP68HX Real-Time Telemetry and Dynamic Wattage Management Platform`t`tAppIcon.ico`t0`t1`tINSTALLDIR
-sc_Desktop`tDesktopFolder`tVECT~1|Vector Power Hub`tcmp_VectorPowerHub_exe`t[#VectorPowerHub.exe]`t`tMSI Vector GP68HX Real-Time Telemetry and Dynamic Wattage Management Platform`t`tAppIcon.ico`t0`t1`tINSTALLDIR
+sc_StartMenu`tProgramMenuFolder`tVECT~1|Vector Power Hub`tcmp_VectorPowerHub_exe`t[#VectorPowerHub.exe]`t`tVector Power Hub Real-Time Telemetry and Dynamic Wattage Management Platform`t`tAppIcon.ico`t0`t1`tINSTALLDIR
+sc_Desktop`tDesktopFolder`tVECT~1|Vector Power Hub`tcmp_VectorPowerHub_exe`t[#VectorPowerHub.exe]`t`tVector Power Hub Real-Time Telemetry and Dynamic Wattage Management Platform`t`tAppIcon.ico`t0`t1`tINSTALLDIR
 "@
     Set-Content -Path (Join-Path $TempDir "Shortcut.idt") -Value $shortcutIdt -Encoding ASCII
 
@@ -195,8 +195,8 @@ Property`tValue
 s72`tl0
 Property`tProperty
 ALLUSERS`t1
-ARPCOMMENTS`tMSI Vector GP68HX Real-Time Telemetry and Dynamic Wattage Management Platform
-ARPCONTACT`tMSI Vector Hub
+ARPCOMMENTS`tVector Power Hub Real-Time Telemetry and Dynamic Wattage Management Platform
+ARPCONTACT`tVector Power Hub
 ARPHELPLINK`thttps://github.com/a7god/VectorPowerHub
 ARPNOMODIFY`t1
 ARPPRODUCTICON`tAppIcon.ico

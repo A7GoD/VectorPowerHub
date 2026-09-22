@@ -72,12 +72,12 @@ namespace VectorPowerHub {
         private void UpdateAutoSwitchVisuals() {
             if (btnToggleAutoSwitch != null) {
                 if (isAutoProfileSwitchingEnabled) {
-                    btnToggleAutoSwitch.Text = "⚡ AUTO-PROFILES: ON (GAME SYNC)";
+                    btnToggleAutoSwitch.Text = "⚡ AUTO-SYNC: ON";
                     btnToggleAutoSwitch.ButtonColor = Color.FromArgb(14, 38, 26);
                     btnToggleAutoSwitch.BorderColor = ColorAccentGreen;
                     btnToggleAutoSwitch.TextColor = ColorAccentGreen;
                 } else {
-                    btnToggleAutoSwitch.Text = "⚡ AUTO-PROFILES: OFF (MANUAL LOCK)";
+                    btnToggleAutoSwitch.Text = "⏸ AUTO-SYNC: OFF";
                     btnToggleAutoSwitch.ButtonColor = Color.FromArgb(32, 28, 16);
                     btnToggleAutoSwitch.BorderColor = ColorAccentGold;
                     btnToggleAutoSwitch.TextColor = ColorAccentGold;

@@ -28,7 +28,8 @@ namespace VectorPowerHub {
             btnMax.Location = new Point(w - 74, 8);
             btnMin.Location = new Point(w - 110, 8);
             btnTrayMin.Location = new Point(w - 146, 8);
-            lblProfileBadge.Location = new Point(w - 158 - lblProfileBadge.Width, 11);
+            btnTrends.Location = new Point(w - 186, 8);
+            lblProfileBadge.Location = new Point(w - 198 - lblProfileBadge.Width, 11);
             lblSubtitle.MaximumSize = new Size(Math.Max(50, lblProfileBadge.Left - lblTitle.Right - 20), 20);
             lblSubtitle.AutoEllipsis = true;
 
@@ -60,7 +61,7 @@ namespace VectorPowerHub {
             panelTabStrip.Location = new Point(16, tabTop);
             panelTabStrip.Size = new Size(w - 32, 38);
             if (btnToggleAutoSwitch != null) {
-                int autoBtnW = Math.Min(350, Math.Max(240, (w - 32) - 580));
+                int autoBtnW = Math.Min(350, Math.Max(200, (w - 32) - 890));
                 btnToggleAutoSwitch.Size = new Size(autoBtnW, 36);
                 btnToggleAutoSwitch.Location = new Point((w - 32) - autoBtnW, 1);
             }
