@@ -130,7 +130,7 @@ public partial class PowerCoreEngine : IDisposable {
                 gpuStatus = string.Format("3D Active ({0:F1}W Dynamic Boost)", gpuWatts);
             }
         } else if (isDisplayAttached) {
-            // NVIDIA GPU is actively driving an attached display (e.g. BENQ EX271Q) in D0 active state
+            // NVIDIA GPU is actively driving an attached display (e.g. External Display) in D0 active state
             ReadGpuTelemetrySafe(out gpuWatts, out gpuClockMhz, out gpuTempC, out gpuUtilPct, out gpuStatus);
             if (gpuWatts > 25.0 || gpuUtilPct > 20) {
                 gpuStatus = string.Format("3D Active ({0:F1}W) • Driving {1}", gpuWatts, monitorName);
@@ -185,4 +185,5 @@ public partial class PowerCoreEngine : IDisposable {
         }
     }
 
-}
+}
+

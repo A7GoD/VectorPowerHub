@@ -48,11 +48,11 @@ namespace VectorPowerHub {
             lblDrawerPcoreVal.Location = new Point(14, 8);
             lblDrawerPcoreVal.AutoSize = true;
 
-            trackDrawerPcore = new TrackBar();
+            trackDrawerPcore = new CustomSlider();
             trackDrawerPcore.Minimum = 30;
             trackDrawerPcore.Maximum = 55;
             trackDrawerPcore.Value = 55;
-            trackDrawerPcore.TickFrequency = 2;
+
             trackDrawerPcore.BackColor = Color.FromArgb(20, 23, 31);
             trackDrawerPcore.Location = new Point(14, 30);
             trackDrawerPcore.Size = new Size(290, 45);
@@ -69,11 +69,11 @@ namespace VectorPowerHub {
             lblDrawerEcoreVal.Location = new Point(326, 8);
             lblDrawerEcoreVal.AutoSize = true;
 
-            trackDrawerEcore = new TrackBar();
+            trackDrawerEcore = new CustomSlider();
             trackDrawerEcore.Minimum = 16;
             trackDrawerEcore.Maximum = 32;
             trackDrawerEcore.Value = 28;
-            trackDrawerEcore.TickFrequency = 2;
+
             trackDrawerEcore.BackColor = Color.FromArgb(20, 23, 31);
             trackDrawerEcore.Location = new Point(326, 30);
             trackDrawerEcore.Size = new Size(290, 45);
@@ -88,11 +88,11 @@ namespace VectorPowerHub {
             lblDrawerEppVal.Location = new Point(630, 8);
             lblDrawerEppVal.AutoSize = true;
 
-            trackDrawerEpp = new TrackBar();
+            trackDrawerEpp = new CustomSlider();
             trackDrawerEpp.Minimum = 0;
             trackDrawerEpp.Maximum = 100;
             trackDrawerEpp.Value = 30;
-            trackDrawerEpp.TickFrequency = 10;
+
             trackDrawerEpp.BackColor = Color.FromArgb(20, 23, 31);
             trackDrawerEpp.Location = new Point(630, 30);
             trackDrawerEpp.Size = new Size(280, 45);
@@ -127,24 +127,24 @@ namespace VectorPowerHub {
             comboDrawerBoost.Size = new Size(290, 22);
 
             lblDrawerGpuVal = new Label();
-            lblDrawerGpuVal.Text = "RTX 5070 Mobile Max Clock: Stock / Unconstrained";
+            lblDrawerGpuVal.Text = "dGPU Max Clock: Stock / Unconstrained";
             lblDrawerGpuVal.Font = new Font("Segoe UI", 9f, FontStyle.Bold);
             lblDrawerGpuVal.ForeColor = ColorAccentCyan;
             lblDrawerGpuVal.Location = new Point(326, 95);
             lblDrawerGpuVal.AutoSize = true;
 
-            trackDrawerGpu = new TrackBar();
+            trackDrawerGpu = new CustomSlider();
             trackDrawerGpu.Minimum = 14;
             trackDrawerGpu.Maximum = 26;
             trackDrawerGpu.Value = 26;
-            trackDrawerGpu.TickFrequency = 1;
+
             trackDrawerGpu.BackColor = Color.FromArgb(20, 23, 31);
             trackDrawerGpu.Location = new Point(326, 120);
             trackDrawerGpu.Size = new Size(330, 45);
             trackDrawerGpu.ValueChanged += (s, e) => {
                 lblDrawerGpuVal.Text = (trackDrawerGpu.Value == 26)
-                    ? "RTX 5070 Mobile Max Clock: Stock / Unconstrained"
-                    : string.Format("RTX 5070 Mobile Max Clock: {0}00 MHz", trackDrawerGpu.Value);
+                    ? "dGPU Max Clock: Stock / Unconstrained"
+                    : string.Format("dGPU Max Clock: {0}00 MHz", trackDrawerGpu.Value);
             };
 
             btnDrawerApply = new GlowButton();
@@ -180,4 +180,5 @@ namespace VectorPowerHub {
 
 
     }
-}
+}
+

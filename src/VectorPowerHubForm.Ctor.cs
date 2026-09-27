@@ -44,6 +44,7 @@ namespace VectorPowerHub {
             try { this.Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath); } catch { }
             this.FormBorderStyle = FormBorderStyle.None;
             this.StartPosition = FormStartPosition.CenterScreen;
+            this.AutoScaleMode = AutoScaleMode.None;
             this.Size = new Size(1160, 800);
             this.MinimumSize = new Size(1120, 720);
             this.BackColor = ColorBgMain;

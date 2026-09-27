@@ -21,7 +21,7 @@ public struct TelemetrySnapshot {
     public bool IsGameMode;
     public string ActiveGameName;
     public int ActiveGamePid;
-    public string GpuStatus; // e.g. "D3cold Sleeping (0.0W) • PCIe Link Off" or "Active (D0) • Driving BENQ EX271Q (P8)"
+    public string GpuStatus; // e.g. "D3cold Sleeping (0.0W) • PCIe Link Off" or "Active (D0) • Driving External Display (P8)"
     public double TotalPlatformPowerW;
     public bool IsNvidiaDisplayAttached;
     public string NvidiaMonitorName;
@@ -148,4 +148,5 @@ public class CpuTopology<TCluster> where TCluster : CpuCluster {
 public class CpuTopology : CpuTopology<CpuCluster> {
     public CpuTopology() : base() { }
 }
-
+
+

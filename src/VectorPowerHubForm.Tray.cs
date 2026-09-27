@@ -167,8 +167,10 @@ namespace VectorPowerHub {
                 trayIcon.Visible = false;
                 trayIcon.Dispose();
             }
+            try { PowerCoreEngine.Instance.Stop(); } catch { }
             bridge.Dispose();
             Application.Exit();
+            Environment.Exit(0);
         }
     }
 }

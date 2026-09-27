@@ -68,6 +68,8 @@ public partial class PowerCoreEngine : IDisposable {
         }
     }
 
+    private volatile bool _pdhQueryActive = false;
+
     private void ReadCpuTelemetry(out double cpuWatts, out double pCoreGhz, out double eCoreGhz, out double[] perCoreGhz, out double[] perCoreUtil) {
         cpuWatts = 0.0;
         pCoreGhz = 0.0;
@@ -85,8 +87,29 @@ public partial class PowerCoreEngine : IDisposable {
             return;
         }
 
+        if (_pdhQueryActive) {
+            // A previous query is still stuck in the kernel!
+            return;
+        }
+
         try {
-            if (PdhNative.PdhCollectQueryData(_hPdhQuery) == 0) {
+            _pdhQueryActive = true;
+            uint pdhResult = 1;
+            
+            var t = System.Threading.Tasks.Task.Factory.StartNew(() => {
+                return PdhNative.PdhCollectQueryData(_hPdhQuery);
+            });
+
+            if (!t.Wait(1500)) {
+                // Timeout! The kernel driver is hung.
+                // We leave _pdhQueryActive = true forever so we never pile up more threads.
+                return;
+            } else {
+                _pdhQueryActive = false;
+                pdhResult = (uint)t.Result;
+            }
+
+            if (pdhResult == 0) {
                 if (_hPdhCounterPwr != IntPtr.Zero) {
                     PdhNative.PDH_FMT_COUNTERVALUE_DOUBLE val;
                     if (PdhNative.PdhGetFormattedCounterValue(_hPdhCounterPwr, PdhNative.PDH_FMT_DOUBLE, IntPtr.Zero, out val) == 0) {
@@ -179,7 +202,9 @@ public partial class PowerCoreEngine : IDisposable {
                 pCoreGhz = (pCount > 0) ? (pSum / pCount) : 0.0;
                 eCoreGhz = (eCount > 0) ? (eSum / eCount) : 0.0;
             }
-        } catch { }
+        } catch {
+            _pdhQueryActive = false; // Reset on general exception
+        }
     }
 
     private void ClosePdh() {

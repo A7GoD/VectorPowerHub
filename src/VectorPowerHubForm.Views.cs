@@ -27,7 +27,7 @@ namespace VectorPowerHub {
                     "• Boost Mode 4 (Eff. Aggressive)",
                     "• Unbounded Freq (5.5 GHz Peak)",
                     "• EPP 30% (Eager GPU Power)",
-                    "• Full 140W RTX 5070 Headroom",
+                    "• Full 140W dGPU Headroom",
                     "• Instant draw-call response",
                     "• Default competitive esports"
                 },
@@ -84,7 +84,7 @@ namespace VectorPowerHub {
                     "• Boost Mode 6 (Efficient Guaranteed)",
                     "• Unbounded Freq (5.5 GHz Peak)",
                     "• EPP 25% (Ultra-Responsive Bias)",
-                    "• Full 140W RTX 5070 Headroom",
+                    "• Full 140W dGPU Headroom",
                     "• Sustained peak IPC headroom",
                     "• Benchmark validated profile"
                 },
@@ -127,7 +127,7 @@ namespace VectorPowerHub {
             panelFooter.BackColor = Color.FromArgb(14, 15, 20);
 
             lblFooterStatus = new Label();
-            lblFooterStatus.Text = "● ETW DXGI Active  |  Telemetry: 750ms  |  D3cold Safe Architecture  |  BenQ EX271Q Aware";
+            lblFooterStatus.Text = "● ETW DXGI Active  |  Telemetry: 750ms  |  D3cold Safe Architecture  |  External Display Aware";
             lblFooterStatus.Font = new Font("Segoe UI", 8.25f, FontStyle.Regular);
             lblFooterStatus.ForeColor = ColorTextDim;
             lblFooterStatus.Location = new Point(16, 17);

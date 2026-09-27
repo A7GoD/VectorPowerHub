@@ -22,6 +22,7 @@ namespace VectorPowerHub {
         public int ProcPerfIncreaseThreshold { get; set; }
         public int CoreParkingDecreasePolicy { get; set; }
         public int ProcPerfDecreaseThreshold { get; set; }
+        public int CoreParkingIncreaseTime { get; set; }
         public int DiskAhciLinkPowerManagement { get; set; }
         public int GpuPreferencePolicy { get; set; }
         public int HibernateAfterSleep { get; set; }
@@ -45,6 +46,7 @@ namespace VectorPowerHub {
             ProcPerfIncreaseThreshold = 90;
             CoreParkingDecreasePolicy = 0;
             ProcPerfDecreaseThreshold = 5;
+            CoreParkingIncreaseTime = 4;
             DiskAhciLinkPowerManagement = 4;
             GpuPreferencePolicy = 1;
             HibernateAfterSleep = 0;
@@ -141,6 +143,8 @@ namespace VectorPowerHub {
                     RunCmd(string.Format("powercfg /setdcvalueindex {0} SUB_PROCESSOR 12a0ab44-fe28-4fa9-b3bd-4b64f44960a6 {1}", s, Config.ProcPerfDecreaseThreshold));
                     RunCmd(string.Format("powercfg /setacvalueindex {0} SUB_PROCESSOR 71021b41-c749-4d21-be74-a00f335d582b {1}", s, Config.CoreParkingDecreasePolicy));
                     RunCmd(string.Format("powercfg /setdcvalueindex {0} SUB_PROCESSOR 71021b41-c749-4d21-be74-a00f335d582b {1}", s, Config.CoreParkingDecreasePolicy));
+                    RunCmd(string.Format("powercfg /setacvalueindex {0} SUB_PROCESSOR 2ddd5a84-5a71-437e-912a-db0b8c788732 {1}", s, Config.CoreParkingIncreaseTime));
+                    RunCmd(string.Format("powercfg /setdcvalueindex {0} SUB_PROCESSOR 2ddd5a84-5a71-437e-912a-db0b8c788732 {1}", s, Config.CoreParkingIncreaseTime));
                     RunCmd(string.Format("powercfg /setacvalueindex {0} 0012ee47-9041-4b5d-9b77-535fba8b1442 0b2d69d7-a2a1-449c-9680-f91c70521c60 {1}", s, Config.DiskAhciLinkPowerManagement));
                     RunCmd(string.Format("powercfg /setdcvalueindex {0} 0012ee47-9041-4b5d-9b77-535fba8b1442 0b2d69d7-a2a1-449c-9680-f91c70521c60 {1}", s, Config.DiskAhciLinkPowerManagement));
                     RunCmd(string.Format("powercfg /setacvalueindex {0} 5fb4938d-1ee8-4b0f-9a3c-5036b0ab995c DD844638-FA00-4E05-9B94-71F4F382612B {1}", s, Config.GpuPreferencePolicy));

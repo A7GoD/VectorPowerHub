@@ -77,15 +77,15 @@ namespace VectorPowerHub {
         private Panel panelCustomTuner;
         private Label lblTunerTitle;
         private Label lblPcoreVal;
-        private TrackBar trackPcore;
+        private CustomSlider trackPcore;
         private Label lblEcoreVal;
-        private TrackBar trackEcore;
+        private CustomSlider trackEcore;
         private Label lblEppVal;
-        private TrackBar trackEpp;
+        private CustomSlider trackEpp;
         private Label lblBoostModeVal;
         private ComboBox comboBoostMode;
         private Label lblGpuClockLimitVal;
-        private TrackBar trackGpuClock;
+        private CustomSlider trackGpuClock;
         private GlowButton btnApplyCustom;
         private GlowButton btnCloseTuner;
 
@@ -109,15 +109,15 @@ namespace VectorPowerHub {
         private GlowButton btnToggleTopologyTuning;
         private Panel panelTopologyTuningDrawer;
         private Label lblDrawerPcoreVal;
-        private TrackBar trackDrawerPcore;
+        private CustomSlider trackDrawerPcore;
         private Label lblDrawerEcoreVal;
-        private TrackBar trackDrawerEcore;
+        private CustomSlider trackDrawerEcore;
         private Label lblDrawerEppVal;
-        private TrackBar trackDrawerEpp;
+        private CustomSlider trackDrawerEpp;
         private Label lblDrawerBoostVal;
         private ComboBox comboDrawerBoost;
         private Label lblDrawerGpuVal;
-        private TrackBar trackDrawerGpu;
+        private CustomSlider trackDrawerGpu;
         private GlowButton btnDrawerApply;
         private PerCoreTopologyControl topologyControl;
 
@@ -157,4 +157,5 @@ namespace VectorPowerHub {
         // -----------------------------------------------------------------------------------------
 
     }
-}
+}
+

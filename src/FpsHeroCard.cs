@@ -70,7 +70,11 @@ namespace VectorPowerHub {
             // Monospace Jitter-Free Digits (Consolas 28pt Bold)
             string fpsStr;
             string unitStr;
+            Color numColor = VectorPowerHubForm.ColorTextWhite;
+            Color unitColor = VectorPowerHubForm.ColorAccentCyan;
+            
             if (isGameMode) {
+                numColor = VectorPowerHubForm.ColorAccentCyan;
                 if (fps > 0.1) {
                     fpsStr = fps.ToString("F1");
                     unitStr = "FPS";
@@ -79,18 +83,19 @@ namespace VectorPowerHub {
                     unitStr = "ACTIVE";
                 }
             } else {
-                fpsStr = "0.0";
-                unitStr = "FPS";
+                fpsStr = "STANDBY";
+                unitStr = "AWAITING ENGINE";
+                numColor = Color.FromArgb(80, 80, 80);
+                unitColor = Color.FromArgb(60, 60, 60);
             }
 
-            Color numColor = isGameMode ? VectorPowerHubForm.ColorAccentCyan : VectorPowerHubForm.ColorTextWhite;
             using (Font fVal = new Font("Consolas", 28f, FontStyle.Bold))
             using (Brush bVal = new SolidBrush(numColor)) {
                 g.DrawString(fpsStr, fVal, bVal, 14, 36);
                 SizeF sz = g.MeasureString(fpsStr, fVal);
 
                 using (Font fUnit = new Font("Segoe UI", 11f, FontStyle.Bold))
-                using (Brush bUnit = new SolidBrush(VectorPowerHubForm.ColorAccentCyan)) {
+                using (Brush bUnit = new SolidBrush(unitColor)) {
                     g.DrawString(unitStr, fUnit, bUnit, 14 + sz.Width - 4, 50);
                 }
             }
@@ -135,7 +140,7 @@ namespace VectorPowerHub {
 
             // Subtitle
             string subText = (isGameMode && fps <= 0.1)
-                ? "Hardware Fallback • RTX 5070 Dynamic Telemetry Engine"
+                ? "Hardware Fallback • dGPU Dynamic Telemetry Engine"
                 : "DirectX DXGI SwapChain Hook (ETW Event 42)";
             using (Font fSub = new Font("Segoe UI", 8.5f, FontStyle.Regular))
             using (Brush bSub = new SolidBrush(VectorPowerHubForm.ColorTextDim)) {
@@ -145,4 +150,5 @@ namespace VectorPowerHub {
     }
 
 
-}
+}
+

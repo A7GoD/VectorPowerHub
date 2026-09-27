@@ -93,8 +93,11 @@ namespace VectorPowerHub {
             if (trayMenuDesktopGuaranteed != null) trayMenuDesktopGuaranteed.Checked = (currentSelectedDesktopProfile == "guaranteed");
 
             if (lblFooterStatus != null) {
+                bool onBattery = (SystemInformation.PowerStatus.PowerLineStatus == PowerLineStatus.Offline);
                 string autoText = isAutoProfileSwitchingEnabled ? "Auto-Profiles: Active (Game Sync)" : "Auto-Profiles: Off (Manual Lock)";
-                lblFooterStatus.Text = string.Format("● ETW DXGI Active  |  {0}  |  D3cold Safe Architecture", autoText);
+                string warn = onBattery ? " | [WARNING] Background Polling Active on Battery (15W+ draw)!" : "";
+                lblFooterStatus.Text = "ETW DXGI Active | " + autoText + " | D3cold Safe Architecture" + warn;
+                lblFooterStatus.ForeColor = onBattery ? Color.Orange : ColorTextDim;
             }
 
             UpdateStartupVisuals();
@@ -104,3 +107,4 @@ namespace VectorPowerHub {
         private const string RunValueName = "VectorPowerHub";
     }
 }
+

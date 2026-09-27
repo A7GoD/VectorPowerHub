@@ -72,7 +72,7 @@ namespace VectorPowerHub {
             // Title
             using (Font fTitle = new Font("Segoe UI", 10.5f, FontStyle.Bold))
             using (Brush bTitle = new SolidBrush(VectorPowerHubForm.ColorAccentCyan)) {
-                g.DrawString("NVIDIA GEFORCE RTX 5070 MOBILE", fTitle, bTitle, 14, 12);
+                g.DrawString("DEDICATED GPU (dGPU)", fTitle, bTitle, 14, 12);
             }
 
             // Subtitle
@@ -84,31 +84,36 @@ namespace VectorPowerHub {
             // 4 Columns Metrics with Monospace Consolas figures
             int colW = (w - 28) / 4;
 
+            bool isStandby = (gpuPowerW < 0.1 && gpuClockMhz < 10);
+            Color valColorPower = isStandby ? Color.FromArgb(80, 80, 80) : (gpuPowerW > 135 ? Color.Red : VectorPowerHubForm.ColorAccentCyan);
+            Color valColorClock = isStandby ? Color.FromArgb(80, 80, 80) : VectorPowerHubForm.ColorTextWhite;
+            Color valColorTemp = isStandby ? Color.FromArgb(80, 80, 80) : (gpuTempC > 85 ? Color.Red : VectorPowerHubForm.ColorTextWhite);
+
             using (Font fVal = new Font("Consolas", 14f, FontStyle.Bold))
             using (Font fSubL = new Font("Segoe UI", 8.5f, FontStyle.Regular))
-            using (Brush bSubL = new SolidBrush(VectorPowerHubForm.ColorTextMuted)) {
+            using (Brush bSubL = new SolidBrush(isStandby ? Color.FromArgb(60, 60, 60) : VectorPowerHubForm.ColorTextMuted)) {
                 // Col 0: Power
-                using (Brush bVal0 = new SolidBrush(VectorPowerHubForm.ColorAccentCyan)) {
-                    g.DrawString(string.Format("{0:0.0} W", gpuPowerW), fVal, bVal0, 14, 56);
+                using (Brush bVal0 = new SolidBrush(valColorPower)) {
+                    g.DrawString(isStandby ? "--.- W" : string.Format("{0:0.0} W", gpuPowerW), fVal, bVal0, 14, 56);
                 }
                 g.DrawString("Dynamic TGP", fSubL, bSubL, 14, 80);
 
                 // Col 1: Clock
-                using (Brush bVal1 = new SolidBrush(VectorPowerHubForm.ColorTextWhite)) {
-                    g.DrawString(string.Format("{0} MHz", gpuClockMhz), fVal, bVal1, 14 + colW, 56);
+                using (Brush bVal1 = new SolidBrush(valColorClock)) {
+                    g.DrawString(isStandby ? "---- MHz" : string.Format("{0} MHz", gpuClockMhz), fVal, bVal1, 14 + colW, 56);
                 }
                 g.DrawString("Core Clock", fSubL, bSubL, 14 + colW, 80);
 
                 // Col 2: Temp
-                string tempStr = (gpuTempC > 0) ? string.Format("{0} °C", gpuTempC) : "-- °C";
-                using (Brush bVal2 = new SolidBrush(VectorPowerHubForm.ColorTextWhite)) {
+                string tempStr = isStandby ? "-- °C" : ((gpuTempC > 0) ? string.Format("{0} °C", gpuTempC) : "-- °C");
+                using (Brush bVal2 = new SolidBrush(valColorTemp)) {
                     g.DrawString(tempStr, fVal, bVal2, 14 + colW * 2, 56);
                 }
                 g.DrawString("Hotspot Temp", fSubL, bSubL, 14 + colW * 2, 80);
 
                 // Col 3: Util
-                using (Brush bVal3 = new SolidBrush(VectorPowerHubForm.ColorTextWhite)) {
-                    g.DrawString(string.Format("{0}%", gpuUtilPct), fVal, bVal3, 14 + colW * 3, 56);
+                using (Brush bVal3 = new SolidBrush(valColorClock)) {
+                    g.DrawString(isStandby ? "-- %" : string.Format("{0}%", gpuUtilPct), fVal, bVal3, 14 + colW * 3, 56);
                 }
                 g.DrawString("GPU Load", fSubL, bSubL, 14 + colW * 3, 80);
             }
@@ -124,7 +129,7 @@ namespace VectorPowerHub {
                 dotColor = VectorPowerHubForm.ColorAccentGold;
                 textCol = VectorPowerHubForm.ColorAccentGold;
             } else if (isNvidiaDisplayAttached) {
-                string mon = string.IsNullOrEmpty(nvidiaMonitorName) ? "BenQ EX2710Q" : nvidiaMonitorName;
+                string mon = string.IsNullOrEmpty(nvidiaMonitorName) ? "External Display" : nvidiaMonitorName;
                 pillText = string.Format("Active (D0) • Driving {0}", mon);
                 pillBg = Color.FromArgb(14, 38, 26);
                 pillBorder = Color.FromArgb(24, 76, 50);
@@ -171,4 +176,5 @@ namespace VectorPowerHub {
     // =========================================================================================
 
 
-}
+}
+

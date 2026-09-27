@@ -79,7 +79,7 @@ namespace VectorPowerHub {
             // Title
             using (Font fTitle = new Font("Segoe UI", 10.5f, FontStyle.Bold))
             using (Brush bTitle = new SolidBrush(VectorPowerHubForm.ColorAccentGold)) {
-                g.DrawString("INTEL CORE ULTRA 9 275HX", fTitle, bTitle, 14, 12);
+                g.DrawString("SYSTEM PROCESSOR (CPU)", fTitle, bTitle, 14, 12);
             }
 
             // Subtitle
@@ -91,24 +91,28 @@ namespace VectorPowerHub {
             // 3 Columns Metrics with Monospace Consolas figures
             int colW = (w - 28) / 3;
 
+            bool isStandby = (cpuPowerW < 0.1 && pCoreGhz < 0.1);
+            Color valColorPower = isStandby ? Color.FromArgb(80, 80, 80) : (cpuPowerW > 150 ? Color.Red : VectorPowerHubForm.ColorAccentGold);
+            Color valColorClock = isStandby ? Color.FromArgb(80, 80, 80) : VectorPowerHubForm.ColorTextWhite;
+
             using (Font fVal = new Font("Consolas", 14f, FontStyle.Bold))
             using (Font fSubL = new Font("Segoe UI", 8.5f, FontStyle.Regular))
-            using (Brush bSubL = new SolidBrush(VectorPowerHubForm.ColorTextMuted)) {
+            using (Brush bSubL = new SolidBrush(isStandby ? Color.FromArgb(60, 60, 60) : VectorPowerHubForm.ColorTextMuted)) {
                 // Col 0: Power
-                using (Brush bVal0 = new SolidBrush(VectorPowerHubForm.ColorAccentGold)) {
-                    g.DrawString(string.Format("{0:0.0} W", cpuPowerW), fVal, bVal0, 14, 56);
+                using (Brush bVal0 = new SolidBrush(valColorPower)) {
+                    g.DrawString(isStandby ? "--.- W" : string.Format("{0:0.0} W", cpuPowerW), fVal, bVal0, 14, 56);
                 }
                 g.DrawString("Package Power", fSubL, bSubL, 14, 80);
 
                 // Col 1: P-Core
-                using (Brush bVal1 = new SolidBrush(VectorPowerHubForm.ColorTextWhite)) {
-                    g.DrawString(string.Format("{0:0.00} GHz", pCoreGhz), fVal, bVal1, 14 + colW, 56);
+                using (Brush bVal1 = new SolidBrush(valColorClock)) {
+                    g.DrawString(isStandby ? "-.-- GHz" : string.Format("{0:0.00} GHz", pCoreGhz), fVal, bVal1, 14 + colW, 56);
                 }
                 g.DrawString("Avg P-Core", fSubL, bSubL, 14 + colW, 80);
 
                 // Col 2: E-Core
-                using (Brush bVal2 = new SolidBrush(VectorPowerHubForm.ColorTextWhite)) {
-                    g.DrawString(string.Format("{0:0.00} GHz", eCoreGhz), fVal, bVal2, 14 + colW * 2, 56);
+                using (Brush bVal2 = new SolidBrush(valColorClock)) {
+                    g.DrawString(isStandby ? "-.-- GHz" : string.Format("{0:0.00} GHz", eCoreGhz), fVal, bVal2, 14 + colW * 2, 56);
                 }
                 g.DrawString("Avg E-Core", fSubL, bSubL, 14 + colW * 2, 80);
             }
@@ -137,4 +141,5 @@ namespace VectorPowerHub {
     }
 
 
-}
+}
+

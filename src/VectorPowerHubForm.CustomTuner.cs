@@ -24,7 +24,7 @@ namespace VectorPowerHub {
             panelCustomTuner.Visible = false;
 
             lblTunerTitle = new Label();
-            lblTunerTitle.Text = "⚙ REAL-TIME HARDWARE TUNER • CORE ULTRA 9 275HX & RTX 5070";
+            lblTunerTitle.Text = "⚙ REAL-TIME HARDWARE TUNER • SYSTEM CPU & dGPU";
             lblTunerTitle.Font = new Font("Segoe UI", 11f, FontStyle.Bold);
             lblTunerTitle.ForeColor = ColorAccentPurple;
             lblTunerTitle.Location = new Point(28, 18);
@@ -42,11 +42,11 @@ namespace VectorPowerHub {
             lblPcoreVal.AutoSize = false;
             lblPcoreVal.AutoEllipsis = true;
 
-            trackPcore = new TrackBar();
+            trackPcore = new CustomSlider();
             trackPcore.Minimum = 30; // 3.0 GHz
             trackPcore.Maximum = 55; // 5.5 GHz (55 = unbounded 0)
             trackPcore.Value = 55;
-            trackPcore.TickFrequency = 1;
+
             trackPcore.BackColor = Color.FromArgb(22, 25, 33);
             trackPcore.Location = new Point(28, 84);
             trackPcore.Size = new Size(400, 45);
@@ -66,11 +66,11 @@ namespace VectorPowerHub {
             lblEcoreVal.AutoSize = false;
             lblEcoreVal.AutoEllipsis = true;
 
-            trackEcore = new TrackBar();
+            trackEcore = new CustomSlider();
             trackEcore.Minimum = 16;
             trackEcore.Maximum = 32;
             trackEcore.Value = 28;
-            trackEcore.TickFrequency = 1;
+
             trackEcore.BackColor = Color.FromArgb(22, 25, 33);
             trackEcore.Location = new Point(460, 84);
             trackEcore.Size = new Size(400, 45);
@@ -88,11 +88,11 @@ namespace VectorPowerHub {
             lblEppVal.AutoSize = false;
             lblEppVal.AutoEllipsis = true;
 
-            trackEpp = new TrackBar();
+            trackEpp = new CustomSlider();
             trackEpp.Minimum = 0;
             trackEpp.Maximum = 100;
             trackEpp.Value = 30;
-            trackEpp.TickFrequency = 5;
+
             trackEpp.BackColor = Color.FromArgb(22, 25, 33);
             trackEpp.Location = new Point(28, 182);
             trackEpp.Size = new Size(400, 45);
@@ -131,7 +131,7 @@ namespace VectorPowerHub {
 
             // 5. GPU Clock Clamp Slider (Row 3, Full Width: X=28, W=860, Label Y=252, Track Y=280)
             lblGpuClockLimitVal = new Label();
-            lblGpuClockLimitVal.Text = "RTX 5070 Mobile Clock: Unconstrained (Stock)";
+            lblGpuClockLimitVal.Text = "dGPU Clock: Unconstrained (Stock)";
             lblGpuClockLimitVal.Font = new Font("Segoe UI", 9.5f, FontStyle.Bold);
             lblGpuClockLimitVal.ForeColor = ColorAccentCyan;
             lblGpuClockLimitVal.Location = new Point(28, 252);
@@ -139,18 +139,18 @@ namespace VectorPowerHub {
             lblGpuClockLimitVal.AutoSize = false;
             lblGpuClockLimitVal.AutoEllipsis = true;
 
-            trackGpuClock = new TrackBar();
+            trackGpuClock = new CustomSlider();
             trackGpuClock.Minimum = 14; // 1400 MHz
             trackGpuClock.Maximum = 26; // 2600 MHz (26 = stock 0)
             trackGpuClock.Value = 26;
-            trackGpuClock.TickFrequency = 1;
+
             trackGpuClock.BackColor = Color.FromArgb(22, 25, 33);
             trackGpuClock.Location = new Point(28, 280);
             trackGpuClock.Size = new Size(860, 45);
             trackGpuClock.ValueChanged += (s, e) => {
                 lblGpuClockLimitVal.Text = (trackGpuClock.Value == 26)
-                    ? "RTX 5070 Mobile Clock: Unconstrained (Stock)"
-                    : string.Format("RTX 5070 Mobile Clock: Clamped to {0}00 MHz", trackGpuClock.Value);
+                    ? "dGPU Clock: Unconstrained (Stock)"
+                    : string.Format("dGPU Clock: Clamped to {0}00 MHz", trackGpuClock.Value);
             };
 
             InitializeCustomTunerBottomControls();
