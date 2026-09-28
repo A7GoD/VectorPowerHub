@@ -96,7 +96,7 @@ namespace VectorPowerHub {
     bool onBattery = (SystemInformation.PowerStatus.PowerLineStatus == PowerLineStatus.Offline);
     string autoText = isAutoProfileSwitchingEnabled ? "Auto-Profiles: Active (Game Sync)" : "Auto-Profiles: Off (Manual Lock)";
     string warn = onBattery ? " | [WARNING] Background Polling Active on Battery (15W+ draw)!" : "";
-    lblFooterStatus.Text = "v1.2.0 | ETW DXGI Active | " + autoText + " | D3cold Safe Architecture" + warn;
+    lblFooterStatus.Text = "v1.3.0 | ETW DXGI Active | " + autoText + " | D3cold Safe Architecture" + warn;
     lblFooterStatus.ForeColor = onBattery ? Color.Orange : ColorTextDim;
 }
 

@@ -127,7 +127,7 @@ namespace VectorPowerHub {
             panelFooter.BackColor = Color.FromArgb(14, 15, 20);
 
             lblFooterStatus = new Label();
-            lblFooterStatus.Text = "v1.2.0  |  ETW DXGI Active  |  Telemetry: 750ms  |  D3cold Safe Architecture  |  External Display Aware";
+            lblFooterStatus.Text = "v1.3.0  |  ETW DXGI Active  |  Telemetry: 750ms  |  D3cold Safe Architecture  |  External Display Aware";
             lblFooterStatus.Font = new Font("Segoe UI", 8.25f, FontStyle.Regular);
             lblFooterStatus.ForeColor = ColorTextDim;
             lblFooterStatus.Location = new Point(16, 17);
