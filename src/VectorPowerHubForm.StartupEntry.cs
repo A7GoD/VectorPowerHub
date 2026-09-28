@@ -73,7 +73,7 @@ namespace VectorPowerHub {
                                 form.benchResultsGrid.AddOrUpdateResult(r1);
 
                                 BenchmarkResultInfo r2 = new BenchmarkResultInfo();
-                                r2.ProfileId = "clamped"; r2.ProfileName = "Sweet-Spot Efficiency (4.9 GHz / 58W)";
+                                r2.ProfileId = "clamped"; r2.ProfileName = "Sweet-Spot Efficiency (Optimal Ceiling)";
                                 r2.CleanedAvgFps = 138.6; r2.RawAvgFps = 137.0;
                                 r2.CleanedOnePercentLow = 95.2; r2.RawOnePercentLow = 91.0;
                                 r2.AvgCpuPowerW = 38.4; r2.AvgGpuPowerW = 118.1; r2.AvgTotalPowerW = 156.5;

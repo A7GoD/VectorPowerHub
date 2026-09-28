@@ -148,7 +148,7 @@ namespace VectorPowerHub {
                 pDot = VectorPowerHubForm.ColorAccentRed;
                 pTextCol = VectorPowerHubForm.ColorAccentRed;
             } else if (totalW > highWarn) {
-                pText = "⚡ PEAK DYNAMIC BOOST ACTIVE (FULL 140W TGP ALLOCATED)";
+                pText = "⚡ PEAK DYNAMIC BOOST ACTIVE (FULL TGP ALLOCATED)";
                 pBg = Color.FromArgb(45, 32, 12);
                 pBorder = Color.FromArgb(90, 60, 20);
                 pDot = VectorPowerHubForm.ColorAccentGold;
@@ -178,4 +178,5 @@ namespace VectorPowerHub {
     }
 
 
-}
+}
+

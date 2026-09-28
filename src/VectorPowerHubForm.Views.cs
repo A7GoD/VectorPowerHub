@@ -25,9 +25,9 @@ namespace VectorPowerHub {
                 ColorAccentCyan,
                 new string[] {
                     "• Boost Mode 4 (Eff. Aggressive)",
-                    "• Unbounded Freq (5.5 GHz Peak)",
+                    "• Unbounded Freq (Uncapped Peak)",
                     "• EPP 30% (Eager GPU Power)",
-                    "• Full 140W dGPU Headroom",
+                    "• Full 100% Dynamic Headroom",
                     "• Instant draw-call response",
                     "• Default competitive esports"
                 },
@@ -40,13 +40,13 @@ namespace VectorPowerHub {
 
             cardProfileEfficiency = new ProfileCard(
                 "✦ Sweet-Spot Efficiency",
-                "CLAMPED 4.9 GHz (58W CEILING)",
+                "CLAMPED High Efficiency (OPTIMAL CEILING)",
                 ColorAccentGold,
                 new string[] {
-                    "• P-Core Clamped 4.9 GHz",
-                    "• E-Core Clamped 2.8 GHz",
-                    "• 58W CPU Ceiling (Zero Starve)",
-                    "• 100% Guaranteed 140W GPU",
+                    "• P-Core Efficiency Clamp (85%)",
+                    "• E-Core Efficiency Clamp (70%)",
+                    "• Optimal CPU Ceiling (Zero Starve)",
+                    "• 100% Guaranteed GPU Headroom",
                     "• Rock-solid frame pacing",
                     "• Ideal for heavy AAA titles"
                 },
@@ -62,7 +62,7 @@ namespace VectorPowerHub {
                 "GPU-SHIFT 2100 MHz (74°C)",
                 ColorAccentBlue,
                 new string[] {
-                    "• GPU Clamped: 2100 MHz (~100W)",
+                    "• GPU Clamped (High Acoustic Efficiency)",
                     "• Boost Mode 3 (Efficient Enabled)",
                     "• EPP: 65% (Relaxed Ramp / Silent)",
                     "• Sub-74°C Sustained GPU Temp",
@@ -82,9 +82,9 @@ namespace VectorPowerHub {
                 ColorAccentPurple,
                 new string[] {
                     "• Boost Mode 6 (Efficient Guaranteed)",
-                    "• Unbounded Freq (5.5 GHz Peak)",
+                    "• Unbounded Freq (Uncapped Peak)",
                     "• EPP 25% (Ultra-Responsive Bias)",
-                    "• Full 140W dGPU Headroom",
+                    "• Full 100% Dynamic Headroom",
                     "• Sustained peak IPC headroom",
                     "• Benchmark validated profile"
                 },
@@ -127,7 +127,7 @@ namespace VectorPowerHub {
             panelFooter.BackColor = Color.FromArgb(14, 15, 20);
 
             lblFooterStatus = new Label();
-            lblFooterStatus.Text = "● ETW DXGI Active  |  Telemetry: 750ms  |  D3cold Safe Architecture  |  External Display Aware";
+            lblFooterStatus.Text = "v1.2.0  |  ETW DXGI Active  |  Telemetry: 750ms  |  D3cold Safe Architecture  |  External Display Aware";
             lblFooterStatus.Font = new Font("Segoe UI", 8.25f, FontStyle.Regular);
             lblFooterStatus.ForeColor = ColorTextDim;
             lblFooterStatus.Location = new Point(16, 17);
@@ -166,4 +166,5 @@ namespace VectorPowerHub {
         }
     }
 }
+
 

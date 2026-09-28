@@ -177,5 +177,26 @@ namespace VectorPowerHub {
         }
 
 
+        public void SetProfileOverride(string profile, string ovr) {
+            if (PowerCoreEngine.Instance != null) {
+                if (profile == "snappy") PowerCoreEngine.Instance.SnappyOverride = ovr;
+                else if (profile == "clamped") PowerCoreEngine.Instance.ClampedOverride = ovr;
+                else if (profile == "cold") PowerCoreEngine.Instance.ColdOverride = ovr;
+                else if (profile == "guaranteed") PowerCoreEngine.Instance.GuaranteedOverride = ovr;
+                else if (profile == "desktop") PowerCoreEngine.Instance.DesktopOverride = ovr;
+                PowerCoreEngine.Instance.SaveUserSettings();
+            }
+        }
+
+        public string GetProfileOverride(string profile) {
+            if (PowerCoreEngine.Instance != null) {
+                if (profile == "snappy") return PowerCoreEngine.Instance.SnappyOverride;
+                else if (profile == "clamped") return PowerCoreEngine.Instance.ClampedOverride;
+                else if (profile == "cold") return PowerCoreEngine.Instance.ColdOverride;
+                else if (profile == "guaranteed") return PowerCoreEngine.Instance.GuaranteedOverride;
+                else if (profile == "desktop") return PowerCoreEngine.Instance.DesktopOverride;
+            }
+            return "";
+        }
     }
-}
+}

@@ -39,6 +39,16 @@ public partial class PowerCoreEngine {
                 if (ExtractJsonInt(text, "PlatformPowerCeilingW", out val) && val > 0) _platformPowerCeilingW = val;
                 bool autoCeiling;
                 if (ExtractJsonBool(text, "AutoPowerCeiling", out autoCeiling)) _autoPowerCeiling = autoCeiling;
+                string snp = ExtractJsonString(text, "SnappyOverride");
+                if (!string.IsNullOrEmpty(snp)) SnappyOverride = snp;
+                string clp = ExtractJsonString(text, "ClampedOverride");
+                if (!string.IsNullOrEmpty(clp)) ClampedOverride = clp;
+                string cld = ExtractJsonString(text, "ColdOverride");
+                if (!string.IsNullOrEmpty(cld)) ColdOverride = cld;
+                string grd = ExtractJsonString(text, "GuaranteedOverride");
+                if (!string.IsNullOrEmpty(grd)) GuaranteedOverride = grd;
+                string dsk = ExtractJsonString(text, "DesktopOverride");
+                if (!string.IsNullOrEmpty(dsk)) DesktopOverride = dsk;
             } catch { }
         }
     }
@@ -155,3 +165,4 @@ public partial class PowerCoreEngine {
         return false;
     }
 }
+

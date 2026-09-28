@@ -25,7 +25,7 @@ namespace VectorPowerHub {
             UpdateProfileCardsVisualState();
 
             string name = "Snappy-Pacing";
-            if (profileId == "clamped") name = "Sweet-Spot Efficiency (4.9 GHz)";
+            if (profileId == "clamped") name = "Sweet-Spot Efficiency (Optimal)";
             if (profileId == "cold") name = "Cold & Quiet (GPU 2100 MHz)";
             if (profileId == "guaranteed") name = "Efficient Guaranteed (Mode 6)";
 
@@ -93,12 +93,12 @@ namespace VectorPowerHub {
             if (trayMenuDesktopGuaranteed != null) trayMenuDesktopGuaranteed.Checked = (currentSelectedDesktopProfile == "guaranteed");
 
             if (lblFooterStatus != null) {
-                bool onBattery = (SystemInformation.PowerStatus.PowerLineStatus == PowerLineStatus.Offline);
-                string autoText = isAutoProfileSwitchingEnabled ? "Auto-Profiles: Active (Game Sync)" : "Auto-Profiles: Off (Manual Lock)";
-                string warn = onBattery ? " | [WARNING] Background Polling Active on Battery (15W+ draw)!" : "";
-                lblFooterStatus.Text = "ETW DXGI Active | " + autoText + " | D3cold Safe Architecture" + warn;
-                lblFooterStatus.ForeColor = onBattery ? Color.Orange : ColorTextDim;
-            }
+    bool onBattery = (SystemInformation.PowerStatus.PowerLineStatus == PowerLineStatus.Offline);
+    string autoText = isAutoProfileSwitchingEnabled ? "Auto-Profiles: Active (Game Sync)" : "Auto-Profiles: Off (Manual Lock)";
+    string warn = onBattery ? " | [WARNING] Background Polling Active on Battery (15W+ draw)!" : "";
+    lblFooterStatus.Text = "v1.2.0 | ETW DXGI Active | " + autoText + " | D3cold Safe Architecture" + warn;
+    lblFooterStatus.ForeColor = onBattery ? Color.Orange : ColorTextDim;
+}
 
             UpdateStartupVisuals();
         }
@@ -107,4 +107,5 @@ namespace VectorPowerHub {
         private const string RunValueName = "VectorPowerHub";
     }
 }
+
 

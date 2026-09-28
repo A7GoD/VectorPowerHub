@@ -55,7 +55,7 @@ public partial class PowerCoreEngine : IDisposable {
             // Benchmark Suite Profiles
             List<BenchmarkProfileConfig> suite = new List<BenchmarkProfileConfig>();
             suite.Add(new BenchmarkProfileConfig("snappy", "Snappy-Pacing (Mode 4, EPP 30%, Uncapped)", 0, 0, 4, 30, 0));
-            suite.Add(new BenchmarkProfileConfig("clamped", "Clamped 4.9 GHz (Mode 4, EPP 25%, P-Core 4900, E-Core 2800)", 4900, 2800, 4, 25, 0));
+            suite.Add(new BenchmarkProfileConfig("clamped", "High Efficiency Clamp (Mode 4, EPP 25%, P-Core 4900, E-Core 2800)", 4900, 2800, 4, 25, 0));
             suite.Add(new BenchmarkProfileConfig("cold", "Cold & Quiet / GPU-Shift (Mode 3, EPP 65%, GPU 2100 MHz)", 0, 0, 3, 65, 2100));
             suite.Add(new BenchmarkProfileConfig("guaranteed", "Efficient Guaranteed (Mode 6, EPP 25%, Uncapped)", 0, 0, 6, 25, 0));
 
@@ -176,4 +176,5 @@ public partial class PowerCoreEngine : IDisposable {
     }
 
 
-}
+}
+

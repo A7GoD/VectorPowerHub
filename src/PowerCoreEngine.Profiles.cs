@@ -34,32 +34,70 @@ public partial class PowerCoreEngine : IDisposable {
         }
     }
 
+    public string SnappyOverride = "";
+    public string ClampedOverride = "";
+    public string ColdOverride = "";
+    public string GuaranteedOverride = "";
+    public string DesktopOverride = "";
+
+    public void ResetProfileOverrides() {
+        SnappyOverride = "";
+        ClampedOverride = "";
+        ColdOverride = "";
+        GuaranteedOverride = "";
+        DesktopOverride = "";
+        SaveUserSettings();
+    }
+
     private void ApplyProfileInternal(string profileId) {
+        int maxClock = 5200; 
+
+        // Helper to parse overrides
+        Func<string, int[], bool> parseOverride = (ovr, defaults) => {
+            if (string.IsNullOrEmpty(ovr)) return false;
+            string[] parts = ovr.Split(',');
+            if (parts.Length == 5) {
+                int.TryParse(parts[0], out defaults[0]);
+                int.TryParse(parts[1], out defaults[1]);
+                int.TryParse(parts[2], out defaults[2]);
+                int.TryParse(parts[3], out defaults[3]);
+                int.TryParse(parts[4], out defaults[4]);
+                return true;
+            }
+            return false;
+        };
+
+        int[] vals = new int[5];
+
         switch (profileId) {
             case "snappy":
-                // P-core 0, E-core 0, Boost Mode 4, EPP 30%, GPU stock
-                ApplySettingsInternal("snappy", 0, 0, 4, 30, 0);
+                vals = new int[] { 0, 0, 4, 30, 0 };
+                parseOverride(SnappyOverride, vals);
+                ApplySettingsInternal("snappy", vals[0], vals[1], vals[2], vals[3], vals[4]);
                 break;
             case "clamped":
-                // P-core 4900, E-core 2800, Boost Mode 4, EPP 25%, GPU stock
-                ApplySettingsInternal("clamped", 4900, 2800, 4, 25, 0);
+                vals = new int[] { (int)(maxClock * 0.85), (int)(maxClock * 0.70), 4, 25, 0 };
+                parseOverride(ClampedOverride, vals);
+                ApplySettingsInternal("clamped", vals[0], vals[1], vals[2], vals[3], vals[4]);
                 break;
             case "cold":
-                // P-core 0, E-core 0, Boost Mode 3, EPP 65%, GPU clamped 2100 MHz
-                ApplySettingsInternal("cold", 0, 0, 3, 65, 2100);
+                vals = new int[] { 0, 0, 3, 65, 2100 };
+                parseOverride(ColdOverride, vals);
+                ApplySettingsInternal("cold", vals[0], vals[1], vals[2], vals[3], vals[4]);
                 break;
             case "guaranteed":
-                // P-core 0, E-core 0, Boost Mode 6, EPP 25%, GPU stock
-                ApplySettingsInternal("guaranteed", 0, 0, 6, 25, 0);
+                vals = new int[] { 0, 0, 6, 25, 0 };
+                parseOverride(GuaranteedOverride, vals);
+                ApplySettingsInternal("guaranteed", vals[0], vals[1], vals[2], vals[3], vals[4]);
                 break;
             case "desktop":
-                // P-core 0, E-core 0, Boost Mode 3, EPP 50%, GPU stock
-                ApplySettingsInternal("desktop", 0, 0, 3, 50, 0);
+                vals = new int[] { 0, 0, 3, 50, 0 };
+                parseOverride(DesktopOverride, vals);
+                ApplySettingsInternal("desktop", vals[0], vals[1], vals[2], vals[3], vals[4]);
                 break;
             case "powersaver":
             case "silent":
             case "eco":
-                // P-core 0, E-core 0, Boost Mode 0 (Disabled), EPP 80%, GPU stock
                 ApplySettingsInternal("powersaver", 0, 0, 0, 80, 0);
                 break;
             case "custom":
@@ -145,3 +183,5 @@ public partial class PowerCoreEngine : IDisposable {
     // ---------------------------------------------------------------------------------------------
 
 }
+
+

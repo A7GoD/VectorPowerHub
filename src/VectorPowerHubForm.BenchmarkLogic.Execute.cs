@@ -10,7 +10,7 @@ namespace VectorPowerHub {
             string[] profileKeys = new string[] { "snappy", "clamped", "cold", "guaranteed" };
             string[] profileNames = new string[] {
                 "⚡ Snappy-Pacing (Mode 4 / EPP 30%)",
-                "✦ Sweet-Spot Efficiency (4.9 GHz / 58W)",
+                "✦ Sweet-Spot Efficiency (Optimal Ceiling)",
                 "❄ Cold & Quiet (GPU 2100 MHz)",
                 "★ Efficient Guaranteed (Mode 6 / EPP 25%)"
             };

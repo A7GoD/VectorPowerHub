@@ -78,7 +78,7 @@ namespace VectorPowerHub {
             // Subtitle
             using (Font fSub = new Font("Segoe UI", 8.25f, FontStyle.Regular))
             using (Brush bSub = new SolidBrush(VectorPowerHubForm.ColorTextDim)) {
-                g.DrawString("140W Max Dynamic TGP • Active Display D3cold Safety", fSub, bSub, 14, 32);
+                g.DrawString("Dynamic TGP Limits • Active Display D3cold Safety", fSub, bSub, 14, 32);
             }
 
             // 4 Columns Metrics with Monospace Consolas figures
@@ -123,7 +123,7 @@ namespace VectorPowerHub {
             Color pillBg, pillBorder, dotColor, textCol;
 
             if (isGameMode || gpuPowerW > 25.0) {
-                pillText = !string.IsNullOrEmpty(gpuStatus) ? gpuStatus : "Active Rendering (D0) • Full 140W Dynamic Headroom";
+                pillText = !string.IsNullOrEmpty(gpuStatus) ? gpuStatus : "Active Rendering (D0) • Full 100% Dynamic Headroom";
                 pillBg = Color.FromArgb(42, 32, 14);
                 pillBorder = Color.FromArgb(88, 64, 22);
                 dotColor = VectorPowerHubForm.ColorAccentGold;

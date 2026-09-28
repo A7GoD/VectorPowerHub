@@ -93,7 +93,7 @@ namespace VectorPowerHub {
                                 int.TryParse(parts[1].Trim(), out snapshot.GpuTempC);
                                 int.TryParse(parts[2].Trim(), out snapshot.GpuClockMhz);
                                 int.TryParse(parts[3].Trim(), out snapshot.GpuUtilPct);
-                                snapshot.GpuStatus = "Active Rendering (D0) • Full 140W Dynamic Headroom";
+                                snapshot.GpuStatus = "Active Rendering (D0) • Full 100% Dynamic Headroom";
                             }
                         }
                     }
@@ -137,4 +137,5 @@ namespace VectorPowerHub {
         }
 
     }
-}
+}
+

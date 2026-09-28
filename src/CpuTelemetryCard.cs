@@ -85,7 +85,7 @@ namespace VectorPowerHub {
             // Subtitle
             using (Font fSub = new Font("Segoe UI", 8.25f, FontStyle.Regular))
             using (Brush bSub = new SolidBrush(VectorPowerHubForm.ColorTextDim)) {
-                g.DrawString("24 Cores (8 Lion Cove P + 16 Skymont E) • RAPL Package Sensor", fSub, bSub, 14, 32);
+                g.DrawString("Hybrid Core Architecture • RAPL Package Sensor", fSub, bSub, 14, 32);
             }
 
             // 3 Columns Metrics with Monospace Consolas figures

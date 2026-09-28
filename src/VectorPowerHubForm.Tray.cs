@@ -30,7 +30,7 @@ namespace VectorPowerHub {
             trayMenu.MenuItems.Add(new MenuItem("-"));
 
             trayMenuSnappy = new MenuItem("⚡ Snappy-Pacing (Competitive Max FPS)", (s, e) => SelectProfile("snappy"));
-            trayMenuEfficiency = new MenuItem("✦ Sweet-Spot Efficiency (4.9 GHz / 58W)", (s, e) => SelectProfile("clamped"));
+            trayMenuEfficiency = new MenuItem("✦ Sweet-Spot Efficiency (Optimal Ceiling)", (s, e) => SelectProfile("clamped"));
             trayMenuCold = new MenuItem("❄ Cold & Quiet (GPU 2100 MHz)", (s, e) => SelectProfile("cold"));
             trayMenuGuaranteed = new MenuItem("★ Efficient Guaranteed (Mode 6 / EPP 25%)", (s, e) => SelectProfile("guaranteed"));
 
@@ -173,4 +173,5 @@ namespace VectorPowerHub {
             Environment.Exit(0);
         }
     }
-}
+}
+

@@ -83,7 +83,7 @@ namespace VectorPowerHub {
         private Label lblEppVal;
         private CustomSlider trackEpp;
         private Label lblBoostModeVal;
-        private ComboBox comboBoostMode;
+        private ComboBox comboBoostMode; private ComboBox comboTunerTarget; private GlowButton btnResetTunerTarget;
         private Label lblGpuClockLimitVal;
         private CustomSlider trackGpuClock;
         private GlowButton btnApplyCustom;

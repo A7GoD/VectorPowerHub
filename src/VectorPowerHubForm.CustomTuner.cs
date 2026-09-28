@@ -28,9 +28,31 @@ namespace VectorPowerHub {
             lblTunerTitle.Font = new Font("Segoe UI", 11f, FontStyle.Bold);
             lblTunerTitle.ForeColor = ColorAccentPurple;
             lblTunerTitle.Location = new Point(28, 18);
-            lblTunerTitle.Size = new Size(860, 26);
+                        lblTunerTitle.Size = new Size(400, 26);
             lblTunerTitle.AutoSize = false;
             lblTunerTitle.AutoEllipsis = true;
+
+            comboTunerTarget = new ComboBox();
+            comboTunerTarget.DropDownStyle = ComboBoxStyle.DropDownList;
+            comboTunerTarget.BackColor = ColorCardBg;
+            comboTunerTarget.ForeColor = ColorTextWhite;
+            comboTunerTarget.Font = new Font("Segoe UI", 9.5f, FontStyle.Bold);
+            comboTunerTarget.Items.AddRange(new object[] { "Custom (Dynamic)", "Snappy", "Clamped", "Cold", "Guaranteed", "Desktop" });
+            comboTunerTarget.SelectedIndex = 0;
+            comboTunerTarget.Location = new Point(620, 16);
+            comboTunerTarget.Size = new Size(180, 28);
+            comboTunerTarget.SelectedIndexChanged += (s, e) => {
+                LoadTunerValuesForTarget();
+            };
+
+            btnResetTunerTarget = new GlowButton();
+            btnResetTunerTarget.Text = "Reset";
+            btnResetTunerTarget.Location = new Point(810, 15);
+            btnResetTunerTarget.Size = new Size(80, 28);
+            btnResetTunerTarget.ButtonColor = ColorCardBg;
+            btnResetTunerTarget.BorderColor = ColorAccentGold;
+            btnResetTunerTarget.TextColor = ColorAccentGold;
+            btnResetTunerTarget.Click += (s, e) => ResetTunerTarget();
 
             // 1. P-Core Limit Slider (Col 1, Row 1: X=28, W=400, Label Y=56, Track Y=84)
             lblPcoreVal = new Label();
@@ -157,3 +179,4 @@ namespace VectorPowerHub {
         }
     }
 }
+

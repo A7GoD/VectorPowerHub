@@ -32,7 +32,7 @@ public partial class PowerCoreEngine : IDisposable {
         gpuClockMhz = 0;
         gpuTempC = 0;
         gpuUtilPct = 0;
-        gpuStatus = "3D Active (140W Boost)";
+        gpuStatus = "3D Active (Full Boost)";
 
         if (!_isNvmlInitialized || _nvmlDevice == IntPtr.Zero) {
             EnsureNvmlInitialized();
@@ -78,4 +78,5 @@ public partial class PowerCoreEngine : IDisposable {
 
     // ---------------------------------------------------------------------------------------------
 
-}
+}
+
