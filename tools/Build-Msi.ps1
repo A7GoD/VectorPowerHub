@@ -3,7 +3,7 @@
 # Uses native WindowsInstaller COM automation and makecab.exe (Zero dependencies)
 # ==============================================================================
 param(
-    [string]$Version = "1.0.0",
+    [string]$Version = "1.3.1",
     [string]$OutputDir = "bin",
     [string]$ProductCode = "{B95C3C8F-7B83-49F1-99A8-1E92A1A88301}",
     [string]$UpgradeCode = "{2B94A9A0-394E-40DC-BE4F-E0DC47FB5412}"

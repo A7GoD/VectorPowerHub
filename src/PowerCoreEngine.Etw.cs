@@ -29,6 +29,7 @@ public partial class PowerCoreEngine : IDisposable {
         _lastEtwAttempt = DateTime.UtcNow;
 
         StopEtw();
+        if (_etwThread != null && _etwThread.IsAlive) return;
 
         string sessionName = "PowerCoreEngine_DXGI_ETW";
         int propSize = Marshal.SizeOf(typeof(EtwNative.EVENT_TRACE_PROPERTIES));
@@ -114,13 +115,6 @@ public partial class PowerCoreEngine : IDisposable {
 
     private void StopEtw() {
         _isEtwActive = false;
-        if (_etwTraceHandle != 0 && _etwTraceHandle != INVALID_PROCESSTRACE_HANDLE) {
-            try {
-                EtwNative.CloseTrace(_etwTraceHandle);
-            } catch { }
-            _etwTraceHandle = 0;
-        }
-
         if (_pSessionProperties != IntPtr.Zero) {
             try {
                 string sessionName = "PowerCoreEngine_DXGI_ETW";
@@ -130,28 +124,36 @@ public partial class PowerCoreEngine : IDisposable {
                 EtwNative.ControlTraceW(_etwSessionHandle, sessionName, _pSessionProperties, EtwNative.EVENT_TRACE_CONTROL_STOP);
             } catch { }
             _etwSessionHandle = 0;
-        } else {
-            ForceStopEtwSession();
         }
+        ForceStopEtwSession();
 
         if (_etwThread != null && _etwThread.IsAlive) {
             try {
-                _etwThread.Join(500);
+                _etwThread.Join(1500);
             } catch { }
-            _etwThread = null;
+            if (!_etwThread.IsAlive) _etwThread = null;
         }
 
-        if (_pLogfile != IntPtr.Zero) {
+        if (_etwTraceHandle != 0 && _etwTraceHandle != INVALID_PROCESSTRACE_HANDLE) {
             try {
-                Marshal.FreeHGlobal(_pLogfile);
+                EtwNative.CloseTrace(_etwTraceHandle);
             } catch { }
-            _pLogfile = IntPtr.Zero;
+            _etwTraceHandle = 0;
         }
-        if (_pSessionProperties != IntPtr.Zero) {
-            try {
-                Marshal.FreeHGlobal(_pSessionProperties);
-            } catch { }
-            _pSessionProperties = IntPtr.Zero;
+
+        if (_etwThread == null) {
+            if (_pLogfile != IntPtr.Zero) {
+                try {
+                    Marshal.FreeHGlobal(_pLogfile);
+                } catch { }
+                _pLogfile = IntPtr.Zero;
+            }
+            if (_pSessionProperties != IntPtr.Zero) {
+                try {
+                    Marshal.FreeHGlobal(_pSessionProperties);
+                } catch { }
+                _pSessionProperties = IntPtr.Zero;
+            }
         }
     }
 

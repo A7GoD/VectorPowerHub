@@ -143,20 +143,19 @@ namespace VectorPowerHub {
             }
         }
 
+        private bool isExiting;
+
         protected override void OnFormClosing(FormClosingEventArgs e) {
-            isDisposingOrClosed = true;
-            if (singleInstanceWakeEvent != null) {
-                try { singleInstanceWakeEvent.Set(); singleInstanceWakeEvent.Close(); } catch { }
-                singleInstanceWakeEvent = null;
-            }
-            if (trayIcon != null) {
-                trayIcon.Visible = false;
-                trayIcon.Dispose();
+            if (!isExiting) {
+                ExitApplication();
+                return;
             }
             base.OnFormClosing(e);
         }
 
         private void ExitApplication() {
+            if (isExiting) return;
+            isExiting = true;
             isDisposingOrClosed = true;
             if (singleInstanceWakeEvent != null) {
                 try { singleInstanceWakeEvent.Set(); singleInstanceWakeEvent.Close(); } catch { }
@@ -168,7 +167,7 @@ namespace VectorPowerHub {
                 trayIcon.Dispose();
             }
             try { PowerCoreEngine.Instance.Stop(); } catch { }
-            bridge.Dispose();
+            if (bridge != null) bridge.Dispose();
             Application.Exit();
             Environment.Exit(0);
         }
